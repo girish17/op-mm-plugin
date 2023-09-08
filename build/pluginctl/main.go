@@ -125,7 +125,9 @@ func deploy(ctx context.Context, client *model.Client4, pluginID, bundlePath str
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %w", bundlePath, err)
 	}
-	defer pluginBundle.Close()
+	defer func(pluginBundle *os.File) {
+		_ = pluginBundle.Close()
+	}(pluginBundle)
 
 	log.Print("Uploading plugin via API.")
 	_, _, err = client.UploadPluginForced(ctx, pluginBundle)

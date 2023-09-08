@@ -10,19 +10,23 @@ import (
 )
 
 func TestServeHTTP(t *testing.T) {
-	assert := assert.New(t)
+	assertVar := assert.New(t)
 	plugin := Plugin{}
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	plugin.ServeHTTP(nil, w, r)
+	plugin.ServeHTTP(w, r)
 
 	result := w.Result()
-	assert.NotNil(result)
-	defer result.Body.Close()
+	assertVar.NotNil(result)
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+		}
+	}(result.Body)
 	bodyBytes, err := io.ReadAll(result.Body)
-	assert.Nil(err)
+	assertVar.Nil(err)
 	bodyString := string(bodyBytes)
 
-	assert.Equal("Hello, world!", bodyString)
+	assertVar.Equal("Hello, world!", bodyString)
 }

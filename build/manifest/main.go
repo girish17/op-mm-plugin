@@ -51,7 +51,9 @@ func findManifest() (*model.Manifest, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open %s", manifestFilePath)
 	}
-	defer manifestFile.Close()
+	defer func(manifestFile *os.File) {
+		_ = manifestFile.Close()
+	}(manifestFile)
 
 	// Re-decode the manifest, disallowing unknown fields. When we write the manifest back out,
 	// we don't want to accidentally clobber anything we won't preserve.
