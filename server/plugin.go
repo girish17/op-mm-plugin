@@ -35,7 +35,7 @@ type Plugin struct {
 }
 
 // ServeHTTP demonstrates a plugin that handles HTTP requests.
-func (p *Plugin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Request) {
 	switch path := r.URL.Path; path {
 	case "/opAuth":
 		util.OpAuth(p.MattermostPlugin, r, pluginURL)
@@ -71,6 +71,7 @@ func (p *Plugin) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		util.Logout(p.MattermostPlugin, w, r)
 		break
 	default:
+		p.MattermostPlugin.API.LogDebug("Path not found: " + path)
 		http.NotFound(w, r)
 	}
 }
@@ -102,6 +103,7 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 	pluginURL = getPluginURL(siteURL)
 	logoURL := getLogoURL(siteURL)
 	p.MattermostPlugin.API.LogDebug("Plugin URL :" + pluginURL)
+	p.MattermostPlugin.API.LogDebug("Logo URL :" + logoURL)
 	if opUserID, _ := p.MattermostPlugin.API.KVGet(args.UserId); opUserID == nil {
 		p.MattermostPlugin.API.LogDebug("Creating interactive dialog...")
 		util.OpenAuthDialog(p.MattermostPlugin, args.TriggerId, pluginURL, logoURL)
