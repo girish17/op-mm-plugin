@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-var apiVersionStr = "/api/v3/"
+const apiVersionStr string = "/api/v3/"
 
 func GetUserDetails(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", opURLStr+apiVersionStr+"users/me", nil)
@@ -25,21 +25,21 @@ func GetWPsForProject(projectID string, opURLStr string, apiKeyStr string) (*htt
 	return client.Do(req)
 }
 
-func PostTimeEntriesForm(timeEntriesBodyJSON []byte, opUrlStr string, apiKeyStr string) (*http.Response, error) {
-	req, _ := http.NewRequest("POST", opUrlStr+apiVersionStr+"time_entries/form", bytes.NewBuffer(timeEntriesBodyJSON))
+func PostTimeEntriesForm(timeEntriesBodyJSON []byte, opURLStr string, apiKeyStr string) (*http.Response, error) {
+	req, _ := http.NewRequest("POST", opURLStr+apiVersionStr+"time_entries/form", bytes.NewBuffer(timeEntriesBodyJSON))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	return client.Do(req)
 }
 
-func GetTimeEntries(opUrlStr string, apiKeyStr string) (*http.Response, error) {
-	req, _ := http.NewRequest("GET", opUrlStr+apiVersionStr+"time_entries", nil)
+func GetTimeEntries(opURLStr string, apiKeyStr string) (*http.Response, error) {
+	req, _ := http.NewRequest("GET", opURLStr+apiVersionStr+"time_entries", nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	return client.Do(req)
 }
 
-func PostTimeEntry(timeEntryJSON []byte, opUrlStr string, apiKeyStr string) (*http.Response, error) {
-	req, _ := http.NewRequest("POST", opUrlStr+apiVersionStr+"time_entries", bytes.NewBuffer(timeEntryJSON))
+func PostTimeEntry(timeEntryJSON []byte, opURLStr string, apiKeyStr string) (*http.Response, error) {
+	req, _ := http.NewRequest("POST", opURLStr+apiVersionStr+"time_entries", bytes.NewBuffer(timeEntryJSON))
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	return client.Do(req)

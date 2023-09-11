@@ -3,7 +3,6 @@ module github.com/girish17/op-mm-plugin
 go 1.19
 
 require (
-	github.com/gorilla/mux v1.8.0
 	github.com/mattermost/mattermost/server/public v0.0.9
 	github.com/pkg/errors v0.9.1
 	github.com/senseyeio/duration v0.0.0-20180430131211-7c2a214ada46
@@ -11,7 +10,6 @@ require (
 )
 
 require (
-	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a // indirect
@@ -48,7 +46,6 @@ require (
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
-	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d // indirect
 	google.golang.org/grpc v1.58.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

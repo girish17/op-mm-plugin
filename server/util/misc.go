@@ -2,10 +2,12 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/girish17/op-mm-plugin/server/types"
+	"strconv"
+
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
-	"strconv"
+
+	"github.com/girish17/op-mm-plugin/server/types"
 )
 
 func getProjectOptAttachmentJSON(pluginURL string, action string, options []types.Option) []byte {
@@ -66,10 +68,10 @@ func getWPOptAttachmentJSON(pluginURL string, action string, options []types.Opt
 	return attachmentsJSON
 }
 
-func getCreatePostMsg(userId string, channelId string, msg string) *model.Post {
+func getCreatePostMsg(userID string, channelID string, msg string) *model.Post {
 	var post = &model.Post{
-		UserId:    userId,
-		ChannelId: channelId,
+		UserId:    userID,
+		ChannelId: channelID,
 		Message:   msg,
 	}
 	return post
@@ -177,21 +179,22 @@ func GetAttachmentJSON(pluginURL string) string {
 		}`
 }
 
-func getUpdatePostMsg(userId string, channelId string, msg string) *model.Post {
+func getUpdatePostMsg(userID string, channelID string, msg string) *model.Post {
 	var post = &model.Post{
 		Id:        menuPost.Id,
-		UserId:    userId,
-		ChannelId: channelId,
+		UserId:    userID,
+		ChannelId: channelID,
 		Message:   msg,
 	}
 	return post
 }
 
 func setOPStr(p plugin.MattermostPlugin) {
-	opUrl, _ := p.API.KVGet("opUrl")
+	opURL, _ := p.API.KVGet("opURL")
 	apiKey, _ := p.API.KVGet("apiKey")
-	opURLStr = string(opUrl)
+	opURLStr = string(opURL)
 	apiKeyStr = string(apiKey)
+	p.API.LogInfo("opURLStr: " + opURLStr + " apiKeyStr: " + apiKeyStr)
 }
 
 func checkDate() bool {
