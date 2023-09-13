@@ -1,4 +1,4 @@
-package util
+package main
 
 import (
 	"encoding/json"
@@ -6,19 +6,17 @@ import (
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
-
-	"github.com/girish17/op-mm-plugin/server/types"
 )
 
-func getProjectOptAttachmentJSON(pluginURL string, action string, options []types.Option) []byte {
-	attachments := types.OptAttachments{Attachments: []types.Attachment{
+func getProjectOptAttachmentJSON(pluginURL string, action string, options []Option) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
 		{
-			Actions: []types.Action{
+			Actions: []Action{
 				{
 					Name: "Type to search for a project...",
-					Integration: types.Integration{
+					Integration: Integration{
 						URL: pluginURL + "/projSel",
-						Context: types.Context{
+						Context: Context{
 							Action: action,
 						},
 					},
@@ -27,7 +25,7 @@ func getProjectOptAttachmentJSON(pluginURL string, action string, options []type
 				},
 				{
 					Name: "Cancel Project search",
-					Integration: types.Integration{
+					Integration: Integration{
 						URL: pluginURL + "/bye",
 					},
 				},
@@ -39,15 +37,15 @@ func getProjectOptAttachmentJSON(pluginURL string, action string, options []type
 	return attachmentsJSON
 }
 
-func getWPOptAttachmentJSON(pluginURL string, action string, options []types.Option) []byte {
-	attachments := types.OptAttachments{Attachments: []types.Attachment{
+func getWPOptAttachmentJSON(pluginURL string, action string, options []Option) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
 		{
-			Actions: []types.Action{
+			Actions: []Action{
 				{
 					Name: "Type to search for a work package...",
-					Integration: types.Integration{
+					Integration: Integration{
 						URL: pluginURL + "/wpSel",
-						Context: types.Context{
+						Context: Context{
 							Action: action,
 						},
 					},
@@ -56,7 +54,7 @@ func getWPOptAttachmentJSON(pluginURL string, action string, options []types.Opt
 				},
 				{
 					Name: "Cancel WP search",
-					Integration: types.Integration{
+					Integration: Integration{
 						URL: pluginURL + "/createTimeLog",
 					},
 				},
@@ -77,11 +75,11 @@ func getCreatePostMsg(userID string, channelID string, msg string) *model.Post {
 	return post
 }
 
-func getOptArrayForProjectElements(elements []types.Element) []types.Option {
-	var options []types.Option
+func getOptArrayForProjectElements(elements []Element) []Option {
+	var options []Option
 	for _, element := range elements {
 		id := strconv.Itoa(element.ID)
-		options = append(options, types.Option{
+		options = append(options, Option{
 			Text:  element.Name,
 			Value: "opt" + id,
 		})
@@ -89,11 +87,11 @@ func getOptArrayForProjectElements(elements []types.Element) []types.Option {
 	return options
 }
 
-func getOptArrayForWPElements(elements []types.Element) []types.Option {
-	var options []types.Option
+func getOptArrayForWPElements(elements []Element) []Option {
+	var options []Option
 	for _, element := range elements {
 		id := strconv.Itoa(element.ID)
-		options = append(options, types.Option{
+		options = append(options, Option{
 			Text:  element.Subject,
 			Value: "opt" + id,
 		})
@@ -101,7 +99,7 @@ func getOptArrayForWPElements(elements []types.Element) []types.Option {
 	return options
 }
 
-func getOptArrayForAllowedValues(allowedValues []types.AllowedValues) []*model.PostActionOptions {
+func getOptArrayForAllowedValues(allowedValues []AllowedValues) []*model.PostActionOptions {
 	var postActionOptions []*model.PostActionOptions
 	for _, value := range allowedValues {
 		id := strconv.Itoa(value.ID)
@@ -192,9 +190,9 @@ func getUpdatePostMsg(userID string, channelID string, msg string) *model.Post {
 func setOPStr(p plugin.MattermostPlugin) {
 	opURL, _ := p.API.KVGet("opURL")
 	apiKey, _ := p.API.KVGet("apiKey")
-	opURLStr = string(opURL)
-	apiKeyStr = string(apiKey)
-	p.API.LogInfo("opURLStr: " + opURLStr + " apiKeyStr: " + apiKeyStr)
+	OpURLStr = string(opURL)
+	APIKeyStr = string(apiKey)
+	p.API.LogInfo("opURLStr: " + OpURLStr + " apiKeyStr: " + APIKeyStr)
 }
 
 func checkDate() bool {

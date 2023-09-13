@@ -3,15 +3,12 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"net/http"
 	"strings"
 	"sync"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/pkg/errors"
-
-	"github.com/girish17/op-mm-plugin/server/util"
 )
 
 const opCommand = "op"
@@ -63,7 +60,7 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 	opUserID, _ := p.MattermostPlugin.API.KVGet(args.UserId)
 	if opUserID == nil {
 		p.MattermostPlugin.API.LogDebug("Creating interactive dialog...")
-		util.OpenAuthDialog(p.MattermostPlugin, args.TriggerId, pluginURL, logoURL)
+		OpenAuthDialog(p.MattermostPlugin, args.TriggerId, pluginURL, logoURL)
 		resp := &model.CommandResponse{
 			ResponseType: model.CommandResponseTypeEphemeral,
 			Text:         "opening op auth dialog",
@@ -72,9 +69,6 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 		}
 		return resp, nil
 	}
-	//cmd := args.Command
-	//cmdAction := strings.Split(cmd, " ")
-	//p.MattermostPlugin.API.LogInfo("Command arg entered: " + cmdAction[1])
 	p.MattermostPlugin.API.LogDebug("opUserID: ", opUserID)
 	apiKeyStr := strings.Split(string(opUserID), " ")
 	opURLStr := apiKeyStr[1]
@@ -82,18 +76,16 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 
 	var cmdResp *model.CommandResponse
 
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", opURLStr+"/api/v3/users/me", nil)
-	req.SetBasicAuth("apikey", apiKeyStr[0])
-	resp, _ := client.Do(req)
+	resp, _ := GetUserDetails(OpURLStr, APIKeyStr)
 	opResBody, _ := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
 
 	var opJSONRes map[string]string
 	_ = json.Unmarshal(opResBody, &opJSONRes)
 	p.MattermostPlugin.API.LogInfo("Hello : ", opJSONRes["firstName"])
 
 	var attachmentMap map[string]interface{}
-	_ = json.Unmarshal([]byte(util.GetAttachmentJSON(pluginURL)), &attachmentMap)
+	_ = json.Unmarshal([]byte(GetAttachmentJSON(pluginURL)), &attachmentMap)
 
 	cmdResp = &model.CommandResponse{
 		ResponseType: model.CommandResponseTypeInChannel,
@@ -102,7 +94,6 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 		IconURL:      logoURL,
 		Props:        attachmentMap,
 	}
-	defer resp.Body.Close()
 	return cmdResp, nil
 }
 

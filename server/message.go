@@ -1,4 +1,4 @@
-package util
+package main
 
 var messages = struct {
 	OpAuthFailMsg        string

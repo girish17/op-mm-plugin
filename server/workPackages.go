@@ -1,4 +1,4 @@
-package types
+package main
 
 type WorkPackages struct {
 	Type     string `json:"_type"`

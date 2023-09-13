@@ -1,4 +1,4 @@
-package types
+package main
 
 type ActivityLinks struct {
 	Self     Self   `json:"self"`
@@ -78,7 +78,7 @@ type Schema struct {
 	WorkPackage  TimeEntryWP  `json:"workPackage"`
 	Project      TimeEntryWP  `json:"project"`
 	Activity     Activity     `json:"activity"`
-	CustomField1 ID           `json:"customField1"`
+	CustomField  string       `json:"customField1"`
 	Links        SchemaLinks  `json:"_links"`
 }
 
@@ -100,11 +100,11 @@ type Comment struct {
 }
 
 type Payload struct {
-	Links        PayloadLinks `json:"_links"`
-	Hours        string       `json:"hours"`
-	Comment      Comment      `json:"comment"`
-	SpentOn      string       `json:"spentOn"`
-	CustomField1 Comment      `json:"customField1"`
+	Links       PayloadLinks `json:"_links"`
+	Hours       string       `json:"hours"`
+	Comment     Comment      `json:"comment"`
+	SpentOn     string       `json:"spentOn"`
+	CustomField string       `json:"customField1"`
 }
 
 type ValidationError struct {
@@ -148,6 +148,10 @@ type TimeEntryPostBody struct {
 			Href string `json:"href"`
 		} `json:"project"`
 	} `json:"_links"`
+	Hours       string  `json:"hours"`
+	Comment     Comment `json:"comment"`
+	SpentOn     string  `json:"spentOn"`
+	CustomField string  `json:"customField1"`
 }
 
 type UpdateImmediately struct {
@@ -168,19 +172,19 @@ type TimeLinks struct {
 	WorkPackage       Link              `json:"workPackage"`
 	User              Link              `json:"user"`
 	Activity          Link              `json:"activity"`
-	CustomField1      Link              `json:"CustomField1"`
+	CustomField       string            `json:"customField1"`
 }
 
 type TimeElement struct {
-	Type         string    `json:"_type"`
-	ID           int       `json:"id"`
-	Comment      Comment   `json:"comment"`
-	SpentOn      string    `json:"spentOn"`
-	Hours        string    `json:"hours"`
-	CreatedAt    string    `json:"createdAt"`
-	UpdatedAt    string    `json:"updatedAt"`
-	Links        TimeLinks `json:"_links"`
-	CustomField1 float64   `json:"customField1"`
+	Type        string    `json:"_type"`
+	ID          int       `json:"id"`
+	Comment     Comment   `json:"comment"`
+	SpentOn     string    `json:"spentOn"`
+	Hours       string    `json:"hours"`
+	CreatedAt   string    `json:"createdAt"`
+	UpdatedAt   string    `json:"updatedAt"`
+	Links       TimeLinks `json:"_links"`
+	CustomField string    `json:"customField1"`
 }
 
 type TimeEntryList struct {
@@ -193,3 +197,120 @@ type TimeEntryList struct {
 		Elements []TimeElement `json:"elements"`
 	} `json:"_embedded"`
 }
+
+/*
+func (sl Schema) MarshalJSON() ([]byte, error) {
+	data := make(map[string]interface{})
+
+	data["_type"] = sl.Type
+	data["_dependencies"] = sl.Dependencies
+	data["id"] = sl.ID
+	data["createdAt"] = sl.CreatedAt
+	data["updatedAt"] = sl.UpdatedAt
+	data["spentOn"] = sl.SpentOn
+	data["hours"] = sl.Hours
+	data["user"] = sl.User
+	data["workPackage"] = sl.WorkPackage
+	data["project"] = sl.Project
+	data["activity"] = sl.Activity
+	data["_links"] = sl.Links
+
+	fieldName := getCustomFieldName()
+	data[fieldName] = sl.CustomField
+
+	return json.Marshal(data)
+}
+
+func (pl Payload) MarshalJSON() ([]byte, error) {
+	data := make(map[string]interface{})
+
+	data["_links"] = pl.Links
+	data["hours"] = pl.Hours
+	data["comment"] = pl.Comment
+	data["spentOn"] = pl.SpentOn
+
+	fieldName := getCustomFieldName()
+	data[fieldName] = pl.CustomField
+
+	return json.Marshal(data)
+}
+
+func (tl TimeLinks) MarshalJSON() ([]byte, error) {
+	data := make(map[string]interface{})
+
+	data["self"] = tl.Self
+	data["updateImmediately"] = tl.UpdateImmediately
+	data["delete"] = tl.Delete
+	data["project"] = tl.Project
+	data["workPackage"] = tl.WorkPackage
+	data["user"] = tl.User
+	data["activity"] = tl.Activity
+
+	fieldName := getCustomFieldName()
+	data[fieldName] = tl.CustomField
+
+	return json.Marshal(data)
+}
+
+func (te TimeElement) MarshalJSON() ([]byte, error) {
+	data := make(map[string]interface{})
+
+	data["_type"] = te.Type
+	data["id"] = te.ID
+	data["comment"] = te.Comment
+	data["spentOn"] = te.SpentOn
+	data["hours"] = te.Hours
+	data["createdAt"] = te.CreatedAt
+	data["updatedAt"] = te.UpdatedAt
+	data["_links"] = te.Links
+
+	fieldName := getCustomFieldName()
+	data[fieldName] = te.CustomField
+
+	return json.Marshal(data)
+}
+
+func (tb TimeEntryPostBody) MarshalJSON() ([]byte, error) {
+	data := make(map[string]interface{})
+
+	data["_links"] = tb.Links
+	data["hours"] = tb.Hours
+	data["spentOn"] = tb.SpentOn
+	data["comment"] = tb.Comment
+
+	fieldName := getCustomFieldName()
+	data[fieldName] = tb.CustomField
+
+	return json.Marshal(data)
+}
+
+func getCustomFieldName() string {
+	resp, err := GetTimeEntriesSchema(OpURLStr, APIKeyStr)
+	if err == nil {
+		body, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		var jsonBody map[string]interface{}
+		_ = json.Unmarshal(body, &jsonBody)
+		return findFirstKeyAndValueContainingBillable(jsonBody)
+	}
+	return "customField1"
+}
+
+func findFirstKeyAndValueContainingBillable(jsonObj map[string]interface{}) string {
+	customFieldRegex := regexp.MustCompile(`(?i)customfield\d+`)
+	for key, value := range jsonObj {
+		if customFieldRegex.MatchString(key) {
+			strValue, ok := value.(string)
+			if ok && strings.Contains(strings.ToLower(strValue), "billable") {
+				return key
+			}
+		}
+		if childObj, ok := value.(map[string]interface{}); ok {
+			if matchedKey := findFirstKeyAndValueContainingBillable(childObj); matchedKey != "" {
+				return matchedKey
+			}
+		}
+	}
+	return "customField1"
+}
+*/

@@ -1,4 +1,4 @@
-package types
+package main
 
 type Self struct {
 	Href  string `json:"href"`

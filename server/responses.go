@@ -1,4 +1,4 @@
-package types
+package main
 
 type Option struct {
 	Text  string `json:"text"`
