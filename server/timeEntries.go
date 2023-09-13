@@ -184,7 +184,7 @@ type TimeElement struct {
 	CreatedAt   string    `json:"createdAt"`
 	UpdatedAt   string    `json:"updatedAt"`
 	Links       TimeLinks `json:"_links"`
-	CustomField string    `json:"customField1"`
+	CustomField float64   `json:"customField1"`
 }
 
 type TimeEntryList struct {

@@ -289,7 +289,8 @@ func getOptArrayForTimeEntries(elements []TimeElement) string {
 					loggedTime = loggedTime + minutes + " minute"
 				}
 			}
-			tableTxt += "| " + element.SpentOn + " | " + element.Links.Project.Title + " | " + element.Links.WorkPackage.Title + " | " + element.Links.Activity.Title + " | " + loggedTime + " | " + element.CustomField + " hours" + " | " + strings.ReplaceAll(element.Comment.Raw, "/\n/g", " ") + " |\n"
+			billedHours := strconv.FormatFloat(element.CustomField, 'f', 2, 64)
+			tableTxt += "| " + element.SpentOn + " | " + element.Links.Project.Title + " | " + element.Links.WorkPackage.Title + " | " + element.Links.Activity.Title + " | " + loggedTime + " | " + billedHours + " hours" + " | " + strings.ReplaceAll(element.Comment.Raw, "/\n/g", " ") + " |\n"
 		}
 	} else {
 		tableTxt = "Couldn't find time entries logged by you :confused: Try logging time using `/op`"
@@ -312,7 +313,7 @@ func Logout(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 	mmUserID := jsonBody["user_id"].(string)
 	p.API.LogInfo("Deleting op login for mm user id: " + mmUserID)
 	err := p.API.KVDelete(mmUserID)
-	if err != nil {
+	if err == nil {
 		user, _ := p.API.GetUserByUsername(opBot)
 		post := getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ByeMsg)
 		_, _ = p.API.UpdatePost(post)
@@ -340,7 +341,7 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 	} else {
 		submission := jsonBody["submission"].(map[string]interface{})
 		if checkDate() {
-			billableHours := fmt.Sprintf("%f", submission["billable_hours"].(float64))
+			billableHours := submission["billable_hours"].(string)
 			if checkHours(billableHours) {
 				var timeEntriesBody TimeEntryPostBody
 				timeEntriesBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
@@ -349,8 +350,9 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 				timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
 				timeEntriesBody.SpentOn = submission["spent_on"].(string)
 				timeEntriesBody.Comment.Raw = submission["comments"].(string)
-				loggedHoursDuration := time.Duration(submission["spent_hours"].(float64)*3600) * time.Second
-				timeEntriesBody.Hours = fmt.Sprintf("PT%dH", int(loggedHoursDuration.Hours()))
+				spentHoursFloat, _ := strconv.ParseFloat(submission["spent_hours"].(string), 64)
+				loggedHoursDuration := time.Duration(spentHoursFloat*3600) * time.Second
+				timeEntriesBody.Hours = fmt.Sprintf("PT%fH", loggedHoursDuration.Hours())
 				timeEntriesBody.CustomField = billableHours
 				p.API.LogDebug("Time entries body: ", timeEntriesBody)
 				timeEntriesBodyJSON, _ := json.Marshal(timeEntriesBody)
