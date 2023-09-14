@@ -26,6 +26,7 @@ func GetLogTimeDlg(pluginURL string, triggerID string, options []*model.PostActi
 				DisplayName: "Comment",
 				Name:        "comments",
 				Type:        "textarea",
+				Default:     "none",
 				Placeholder: "Please mention comments if any",
 				Optional:    true,
 			}, {

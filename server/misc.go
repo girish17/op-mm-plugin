@@ -2,7 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
@@ -177,6 +180,21 @@ func GetAttachmentJSON(pluginURL string) string {
 		}`
 }
 
+func GetTimeEntriesBodyJSON(submission map[string]interface{}, loggedHours string, billableHours string) ([]byte, error) {
+	var timeEntriesBody TimeEntryPostBody
+	timeEntriesBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
+	timeEntriesBody.Links.WorkPackage.Href = apiVersionStr + "work_packages/" + wpID
+	activityID = strings.Split(submission["activity"].(string), "opt")[1]
+	timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
+	timeEntriesBody.SpentOn = submission["spent_on"].(string)
+	timeEntriesBody.Comment.Raw = submission["comments"].(string)
+	spentHoursFloat, _ := strconv.ParseFloat(loggedHours, 64)
+	loggedHoursDuration := time.Duration(spentHoursFloat*3600) * time.Second
+	timeEntriesBody.Hours = fmt.Sprintf("PT%fH", loggedHoursDuration.Hours())
+	timeEntriesBody.CustomField = billableHours
+	return json.Marshal(timeEntriesBody)
+}
+
 func getUpdatePostMsg(userID string, channelID string, msg string) *model.Post {
 	var post = &model.Post{
 		Id:        menuPost.Id,
@@ -195,10 +213,22 @@ func setOPStr(p plugin.MattermostPlugin) {
 	p.API.LogInfo("opURLStr: " + OpURLStr + " apiKeyStr: " + APIKeyStr)
 }
 
-func checkDate() bool {
-	return true
+func checkDate(dateStr string) bool {
+	layout := "2006-01-02"
+	date, err := time.Parse(layout, dateStr)
+	if err != nil {
+		return false
+	}
+	currentDate := time.Now()
+	oneYearAgo := currentDate.AddDate(-1, 0, 0)
+	if date.After(oneYearAgo) && date.Before(currentDate) {
+		return true
+	}
+	return false
 }
 
-func checkHours(_ string) bool {
-	return true
+func checkHours(billableHours string, hoursLogged string) bool {
+	hoursLoggedFloat, _ := strconv.ParseFloat(hoursLogged, 64)
+	billableHoursFloat, _ := strconv.ParseFloat(billableHours, 64)
+	return billableHoursFloat <= hoursLoggedFloat
 }

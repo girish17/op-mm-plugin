@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
@@ -340,22 +338,11 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 		post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.DlgCancelMsg)
 	} else {
 		submission := jsonBody["submission"].(map[string]interface{})
-		if checkDate() {
+		if checkDate(submission["spent_on"].(string)) {
 			billableHours := submission["billable_hours"].(string)
-			if checkHours(billableHours) {
-				var timeEntriesBody TimeEntryPostBody
-				timeEntriesBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
-				timeEntriesBody.Links.WorkPackage.Href = apiVersionStr + "work_packages/" + wpID
-				activityID = strings.Split(submission["activity"].(string), "opt")[1]
-				timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
-				timeEntriesBody.SpentOn = submission["spent_on"].(string)
-				timeEntriesBody.Comment.Raw = submission["comments"].(string)
-				spentHoursFloat, _ := strconv.ParseFloat(submission["spent_hours"].(string), 64)
-				loggedHoursDuration := time.Duration(spentHoursFloat*3600) * time.Second
-				timeEntriesBody.Hours = fmt.Sprintf("PT%fH", loggedHoursDuration.Hours())
-				timeEntriesBody.CustomField = billableHours
-				p.API.LogDebug("Time entries body: ", timeEntriesBody)
-				timeEntriesBodyJSON, _ := json.Marshal(timeEntriesBody)
+			loggedHours := submission["spent_hours"].(string)
+			if checkHours(billableHours, loggedHours) {
+				timeEntriesBodyJSON, _ := GetTimeEntriesBodyJSON(submission, loggedHours, billableHours)
 				resp, err := PostTimeEntry(timeEntriesBodyJSON, OpURLStr, APIKeyStr)
 				p.API.LogDebug("Time entries body JSON: ", string(timeEntriesBodyJSON))
 				if err == nil {
@@ -376,7 +363,7 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 					post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntrySaveFailMsg)
 				}
 			} else {
-				p.API.LogInfo("Billable hours incorrect: ", jsonBody["billable_hours"])
+				p.API.LogInfo("Billable hours incorrect: ", billableHours)
 				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.BillableHourMsg)
 			}
 		} else {
