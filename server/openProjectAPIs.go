@@ -71,7 +71,6 @@ func PostTimeEntry(timeEntryJSON []byte, opURLStr string, apiKeyStr string) (*ht
 	return resp, err
 }
 
-/*
 func GetTimeEntriesSchema(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", opURLStr+apiVersionStr+"time_entries/schema", nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
@@ -81,4 +80,3 @@ func GetTimeEntriesSchema(opURLStr string, apiKeyStr string) (*http.Response, er
 	}
 	return resp, err
 }
-*/

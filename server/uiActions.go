@@ -26,6 +26,10 @@ var wpID string
 
 var activityID string
 
+var customFieldForBillableHours string
+
+var timeEntriesSchema map[string]interface{}
+
 func OpAuth(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
@@ -288,16 +292,18 @@ func getOptArrayForTimeEntries(elements []TimeElement) string {
 				}
 			}
 			billedHours := strconv.FormatFloat(element.CustomField, 'f', 2, 64)
-			tableTxt += "| " + element.SpentOn + " | " + element.Links.Project.Title + " | " + element.Links.WorkPackage.Title + " | " + element.Links.Activity.Title + " | " + loggedTime + " | " + billedHours + " hours" + " | " + strings.ReplaceAll(element.Comment.Raw, "/\n/g", " ") + " |\n"
+			tableTxt += "| " + element.SpentOn + " | "
+			tableTxt += element.Links.Project.Title + " | "
+			tableTxt += element.Links.WorkPackage.Title + " | "
+			tableTxt += element.Links.Activity.Title + " | "
+			tableTxt += loggedTime + " | "
+			tableTxt += billedHours + " hours" + " | "
+			tableTxt += strings.ReplaceAll(element.Comment.Raw, "/\n/g", " ") + " |\n"
 		}
 	} else {
 		tableTxt = "Couldn't find time entries logged by you :confused: Try logging time using `/op`"
 	}
 	return tableTxt
-}
-
-func ShowDelWPSel() {
-
 }
 
 func OpenAuthDialog(p plugin.MattermostPlugin, triggerID string, pluginURL string, logoURL string) {
@@ -347,13 +353,14 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 				p.API.LogDebug("Time entries body JSON: ", string(timeEntriesBodyJSON))
 				if err == nil {
 					opResBody, _ := io.ReadAll(resp.Body)
+					p.API.LogDebug("Time entries response body from OpenProject: ", string(opResBody))
 					defer resp.Body.Close()
-					var opJSONRes TimeEntries
+					var opJSONRes TimeElement
 					_ = json.Unmarshal(opResBody, &opJSONRes)
 					p.API.LogDebug("Time entries response from OpenProject: ", opJSONRes)
 					if opJSONRes.Type != "Error" {
 						p.API.LogInfo("Time logged. Save response: ")
-						post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), "Time entry ID - ")
+						post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), "Time entry ID - "+strconv.Itoa(opJSONRes.ID)+messages.LogTimeSuccessMsg)
 					} else {
 						p.API.LogError(messages.TimeEntrySaveFailMsg)
 						post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntrySaveFailMsg)
@@ -372,4 +379,10 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 		}
 	}
 	_, _ = p.API.UpdatePost(post)
+}
+
+func NotImplemented(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	_, _ = w.Write([]byte(messages.ByeMsg))
 }

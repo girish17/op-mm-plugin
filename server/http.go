@@ -22,13 +22,13 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	case "/getTimeLog":
 		GetTimeLog(p.MattermostPlugin, r)
 	case "/delTimeLog":
-		http.NotFound(w, r)
+		NotImplemented(w)
 	case "/createWP":
-		http.NotFound(w, r)
+		NotImplemented(w)
 	case "/saveWP":
-		http.NotFound(w, r)
+		NotImplemented(w)
 	case "/delWP":
-		ShowDelWPSel()
+		NotImplemented(w)
 	case "/bye":
 		Logout(p.MattermostPlugin, w, r)
 	default:

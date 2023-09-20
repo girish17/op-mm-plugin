@@ -13,6 +13,8 @@ var messages = struct {
 	TimeEntrySaveFailMsg string
 	DateIncorrectMsg     string
 	DlgCancelMsg         string
+	NotImplemented       string
+	LogTimeSuccessMsg    string
 }{
 	OpAuthFailMsg:        "OpenProject authentication failed. Please try again.",
 	ProjectSelMsg:        "*Please select a project*",
@@ -26,4 +28,6 @@ var messages = struct {
 	TimeEntrySaveFailMsg: "Failed to save time entry in OpenProject",
 	DateIncorrectMsg:     "**It seems that date was incorrect :thinking: Please enter a date within last one year and in YYYY-MM-DD format. **",
 	DlgCancelMsg:         "** If you would like to try again then, `/op` **",
+	NotImplemented:       "Not yet implemented. Donate at https://www.paypal.me/girishm17 :wave:",
+	LogTimeSuccessMsg:    "\n**Time logged! You are awesome :sunglasses: **\n To view time logged try `/op",
 }

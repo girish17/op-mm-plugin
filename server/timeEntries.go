@@ -1,5 +1,13 @@
 package main
 
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"regexp"
+	"strings"
+)
+
 type ActivityLinks struct {
 	Self     Self   `json:"self"`
 	Projects []Self `json:"projects"`
@@ -78,7 +86,7 @@ type Schema struct {
 	WorkPackage  TimeEntryWP  `json:"workPackage"`
 	Project      TimeEntryWP  `json:"project"`
 	Activity     Activity     `json:"activity"`
-	CustomField  string       `json:"customField1"`
+	CustomField  string       `json:"-"`
 	Links        SchemaLinks  `json:"_links"`
 }
 
@@ -104,7 +112,7 @@ type Payload struct {
 	Hours       string       `json:"hours"`
 	Comment     Comment      `json:"comment"`
 	SpentOn     string       `json:"spentOn"`
-	CustomField string       `json:"customField1"`
+	CustomField string       `json:"-"`
 }
 
 type ValidationError struct {
@@ -151,7 +159,7 @@ type TimeEntryPostBody struct {
 	Hours       string  `json:"hours"`
 	Comment     Comment `json:"comment"`
 	SpentOn     string  `json:"spentOn"`
-	CustomField string  `json:"customField1"`
+	CustomField string  `json:"-"`
 }
 
 type UpdateImmediately struct {
@@ -172,7 +180,7 @@ type TimeLinks struct {
 	WorkPackage       Link              `json:"workPackage"`
 	User              Link              `json:"user"`
 	Activity          Link              `json:"activity"`
-	CustomField       string            `json:"customField1"`
+	CustomField       string            `json:"-"`
 }
 
 type TimeElement struct {
@@ -184,7 +192,7 @@ type TimeElement struct {
 	CreatedAt   string    `json:"createdAt"`
 	UpdatedAt   string    `json:"updatedAt"`
 	Links       TimeLinks `json:"_links"`
-	CustomField float64   `json:"customField1"`
+	CustomField float64   `json:"-"`
 }
 
 type TimeEntryList struct {
@@ -198,7 +206,40 @@ type TimeEntryList struct {
 	} `json:"_embedded"`
 }
 
-/*
+func (tel *TimeEntryList) UnmarshalJSON(data []byte) error {
+	var jsonData map[string]interface{}
+
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		return err
+	}
+	tel.Type, _ = jsonData["_type"].(string)
+	tel.Total, _ = jsonData["total"].(int)
+	tel.Count, _ = jsonData["count"].(int)
+	tel.PageSize, _ = jsonData["pageSize"].(int)
+	tel.Offset, _ = jsonData["offset"].(int)
+	embeddedData, ok := jsonData["_embedded"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("missing _embedded field or it's not an object")
+	}
+	elementsData, ok := embeddedData["elements"].([]interface{})
+	if !ok {
+		return fmt.Errorf("missing elements field or it's not an array")
+	}
+
+	for _, element := range elementsData {
+		elementBytes, err := json.Marshal(element)
+		if err != nil {
+			return err
+		}
+		var timeElement TimeElement
+		if err := json.Unmarshal(elementBytes, &timeElement); err != nil {
+			return err
+		}
+		tel.Embedded.Elements = append(tel.Embedded.Elements, timeElement)
+	}
+	return nil
+}
+
 func (sl Schema) MarshalJSON() ([]byte, error) {
 	data := make(map[string]interface{})
 
@@ -252,7 +293,7 @@ func (tl TimeLinks) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (te TimeElement) MarshalJSON() ([]byte, error) {
+func (te *TimeElement) MarshalJSON() ([]byte, error) {
 	data := make(map[string]interface{})
 
 	data["_type"] = te.Type
@@ -270,6 +311,37 @@ func (te TimeElement) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
+func (te *TimeElement) UnmarshalJSON(data []byte) error {
+	var jsonData map[string]interface{}
+
+	if err := json.Unmarshal(data, &jsonData); err != nil {
+		return err
+	}
+	te.Type, _ = jsonData["_type"].(string)
+	te.ID = int(jsonData["id"].(float64))
+	commentBytes, _ := json.Marshal(jsonData["comment"])
+	if err := json.Unmarshal(commentBytes, &te.Comment); err != nil {
+		return err
+	}
+	te.SpentOn, _ = jsonData["spentOn"].(string)
+	te.Hours, _ = jsonData["hours"].(string)
+	te.CreatedAt, _ = jsonData["createdAt"].(string)
+	te.UpdatedAt, _ = jsonData["updatedAt"].(string)
+	linksBytes, ok := jsonData["_links"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("missing _links field or it's not an object")
+	}
+
+	linksData, _ := json.Marshal(linksBytes)
+	if err := json.Unmarshal(linksData, &te.Links); err != nil {
+		return err
+	}
+
+	fieldName := getCustomFieldName()
+	te.CustomField, _ = jsonData[fieldName].(float64)
+	return nil
+}
+
 func (tb TimeEntryPostBody) MarshalJSON() ([]byte, error) {
 	data := make(map[string]interface{})
 
@@ -285,32 +357,28 @@ func (tb TimeEntryPostBody) MarshalJSON() ([]byte, error) {
 }
 
 func getCustomFieldName() string {
-	resp, err := GetTimeEntriesSchema(OpURLStr, APIKeyStr)
-	if err == nil {
-		body, _ := io.ReadAll(resp.Body)
-		defer resp.Body.Close()
-		var jsonBody map[string]interface{}
-		_ = json.Unmarshal(body, &jsonBody)
-		return findFirstKeyAndValueContainingBillable(jsonBody)
+	if customFieldForBillableHours == "" {
+		resp, err := GetTimeEntriesSchema(OpURLStr, APIKeyStr)
+		if err == nil {
+			body, _ := io.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			_ = json.Unmarshal(body, &timeEntriesSchema)
+			customFieldForBillableHours = findFirstKVContainingBillable(timeEntriesSchema)
+			return customFieldForBillableHours
+		}
 	}
-	return "customField1"
+	return customFieldForBillableHours
 }
 
-func findFirstKeyAndValueContainingBillable(jsonObj map[string]interface{}) string {
-	customFieldRegex := regexp.MustCompile(`(?i)customfield\d+`)
-	for key, value := range jsonObj {
+func findFirstKVContainingBillable(jsonObj map[string]interface{}) string {
+	customFieldRegex := regexp.MustCompile(`customField\d+`)
+	for key, v := range jsonObj {
 		if customFieldRegex.MatchString(key) {
-			strValue, ok := value.(string)
-			if ok && strings.Contains(strings.ToLower(strValue), "billable") {
+			var strValue, ok = v.(map[string]interface{})
+			if ok && strings.Contains(strings.ToLower(strValue["name"].(string)), "billable") {
 				return key
 			}
 		}
-		if childObj, ok := value.(map[string]interface{}); ok {
-			if matchedKey := findFirstKeyAndValueContainingBillable(childObj); matchedKey != "" {
-				return matchedKey
-			}
-		}
 	}
 	return "customField1"
 }
-*/
