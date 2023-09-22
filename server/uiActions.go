@@ -24,6 +24,8 @@ var projectID string
 
 var timeLogID string
 
+var timeEntry string
+
 var activityID string
 
 var customFieldForBillableHours string
@@ -274,30 +276,14 @@ func getOptArrayForTimeEntries(elements []TimeElement) string {
 		tableTxt += "|:---------|:--------|:-------------|:---------|:------------|:------------|:--------|\n"
 		for _, element := range elements {
 			d, _ := duration.ParseISO8601(element.Hours)
-			var loggedTime = ""
-			if d.TH != 0 {
-				hours := strconv.Itoa(d.TH)
-				if d.TH > 1 {
-					loggedTime = hours + " hours "
-				} else {
-					loggedTime = hours + " hour "
-				}
-			}
-			if d.TM != 0 {
-				minutes := strconv.Itoa(d.TM)
-				if d.TM > 1 {
-					loggedTime = loggedTime + minutes + " minutes"
-				} else {
-					loggedTime = loggedTime + minutes + " minute"
-				}
-			}
-			billedHours := strconv.FormatFloat(element.CustomField, 'f', 2, 64)
+			loggedTime := convDurationToHoursMin(d)
+			billedHours := convHoursToHoursMin(element.CustomField)
 			tableTxt += "| " + element.SpentOn + " | "
 			tableTxt += element.Links.Project.Title + " | "
 			tableTxt += element.Links.WorkPackage.Title + " | "
 			tableTxt += element.Links.Activity.Title + " | "
 			tableTxt += loggedTime + " | "
-			tableTxt += billedHours + " hours" + " | "
+			tableTxt += billedHours + " | "
 			tableTxt += strings.ReplaceAll(element.Comment.Raw, "/\n/g", " ") + " |\n"
 		}
 	} else {
@@ -395,7 +381,8 @@ func DeleteTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Req
 			action = value.(string)
 			p.API.LogInfo("action: " + action)
 		case "selected_option":
-			selectedOption = strings.Split(value.(string), "opt")
+			selectedOption = strings.Split(value.(string), "|")
+			timeEntry = selectedOption[0]
 			timeLogID = selectedOption[1]
 			p.API.LogInfo("selected option: " + timeLogID)
 		}
@@ -414,7 +401,7 @@ func cnfDelTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, channelID s
 	var attachmentMap map[string]interface{}
 	var post *model.Post
 	user, _ := p.API.GetUserByUsername(opBot)
-	post = getUpdatePostMsg(user.Id, channelID, messages.CnfDelTimeLogMsg)
+	post = getUpdatePostMsg(user.Id, channelID, messages.CnfDelTimeLogMsg+"\n"+timeEntry)
 	_ = json.Unmarshal(getCnfDelBtnJSON(pluginURL+"/delTimeLog", "delSelTimeLog"), &attachmentMap)
 	post.SetProps(attachmentMap)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -450,6 +437,7 @@ func delTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, timeLogID stri
 		p.API.LogError(messages.TimeLogDelErrMsg)
 		post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
 	}
+	defer resp.Body.Close()
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(resp.StatusCode)
 	_ = respHTTP.Write(w)

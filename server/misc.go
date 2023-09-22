@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/senseyeio/duration"
+
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin"
 )
@@ -187,13 +189,15 @@ func getOptArrayForTimeLogElements(elements []TimeElement) []Option {
 		id := strconv.Itoa(element.ID)
 		text := element.Comment.Raw + "-"
 		text += element.SpentOn + "-"
-		text += element.Hours + "-"
+		d, _ := duration.ParseISO8601(element.Hours)
+		loggedTime := convDurationToHoursMin(d)
+		text += loggedTime + "-"
 		text += element.Links.WorkPackage.Title + "-"
 		text += element.Links.Activity.Title + "-"
 		text += element.Links.Project.Title
 		options = append(options, Option{
 			Text:  text,
-			Value: "opt" + id,
+			Value: text + "|" + id,
 		})
 	}
 	return options
@@ -328,4 +332,38 @@ func checkHours(billableHours string, hoursLogged string) bool {
 	hoursLoggedFloat, _ := strconv.ParseFloat(hoursLogged, 64)
 	billableHoursFloat, _ := strconv.ParseFloat(billableHours, 64)
 	return billableHoursFloat <= hoursLoggedFloat
+}
+
+func convDurationToHoursMin(d duration.Duration) string {
+	var loggedTime = ""
+	if d.TH != 0 {
+		hours := strconv.Itoa(d.TH)
+		if d.TH > 1 {
+			loggedTime = hours + " hours "
+		} else {
+			loggedTime = hours + " hour "
+		}
+	}
+	if d.TM != 0 {
+		minutes := strconv.Itoa(d.TM)
+		if d.TM > 1 {
+			loggedTime = loggedTime + minutes + " minutes"
+		} else {
+			loggedTime = loggedTime + minutes + " minute"
+		}
+	}
+	return loggedTime
+}
+
+func convHoursToHoursMin(hours float64) string {
+	seconds := int(hours * 3600)
+	minutes := (seconds / 60) % 60
+	hour := int(hours)
+	if hour > 0 {
+		return strconv.Itoa(hour) + " hours " + strconv.Itoa(minutes) + " minutes"
+	}
+	if minutes > 1 {
+		return strconv.Itoa(minutes) + " minutes"
+	}
+	return strconv.Itoa(minutes) + " minute"
 }
