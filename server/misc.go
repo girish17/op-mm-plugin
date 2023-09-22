@@ -69,6 +69,85 @@ func getWPOptAttachmentJSON(pluginURL string, action string, options []Option) [
 	return attachmentsJSON
 }
 
+func getTimeLogOptJSON(pluginURL string, action string, options []Option) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
+		{
+			Actions: []Action{
+				{
+					Name: "Type to search for a time log...",
+					Integration: Integration{
+						URL: pluginURL + "/delTimeLog",
+						Context: Context{
+							Action: action,
+						},
+					},
+					Type:    "select",
+					Options: options,
+				},
+				{
+					Name: "Cancel search",
+					Integration: Integration{
+						URL: pluginURL + "/bye",
+					},
+				},
+			},
+		},
+	},
+	}
+	attachmentsJSON, _ := json.Marshal(attachments)
+	return attachmentsJSON
+}
+
+func getCnfDelBtnJSON(url string, action string) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
+		{
+			Actions: []Action{
+				{
+					Name: "Yes, Delete!",
+					Integration: Integration{
+						URL: url,
+						Context: Context{
+							Action: action,
+						},
+					},
+				},
+				{
+					Name: "No, go back.",
+					Integration: Integration{
+						URL: url,
+						Context: Context{
+							Action: "",
+						},
+					},
+				},
+			},
+		},
+	},
+	}
+	attachmentsJSON, _ := json.Marshal(attachments)
+	return attachmentsJSON
+}
+
+func getTimeLogDelMsgJSON(pluginURL string) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
+		{
+			Actions: []Action{
+				{
+					Name: "View time logs",
+					Integration: Integration{
+						URL: pluginURL + "/getTimeLog",
+						Context: Context{
+							Action: "getTimeLog",
+						},
+					},
+				},
+			},
+		},
+	}}
+	attachmentsJSON, _ := json.Marshal(attachments)
+	return attachmentsJSON
+}
+
 func getCreatePostMsg(userID string, channelID string, msg string) *model.Post {
 	var post = &model.Post{
 		UserId:    userID,
@@ -96,6 +175,24 @@ func getOptArrayForWPElements(elements []Element) []Option {
 		id := strconv.Itoa(element.ID)
 		options = append(options, Option{
 			Text:  element.Subject,
+			Value: "opt" + id,
+		})
+	}
+	return options
+}
+
+func getOptArrayForTimeLogElements(elements []TimeElement) []Option {
+	var options []Option
+	for _, element := range elements {
+		id := strconv.Itoa(element.ID)
+		text := element.Comment.Raw + "-"
+		text += element.SpentOn + "-"
+		text += element.Hours + "-"
+		text += element.Links.WorkPackage.Title + "-"
+		text += element.Links.Activity.Title + "-"
+		text += element.Links.Project.Title
+		options = append(options, Option{
+			Text:  text,
 			Value: "opt" + id,
 		})
 	}
@@ -183,7 +280,7 @@ func GetAttachmentJSON(pluginURL string) string {
 func GetTimeEntriesBodyJSON(submission map[string]interface{}, loggedHours string, billableHours string) ([]byte, error) {
 	var timeEntriesBody TimeEntryPostBody
 	timeEntriesBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
-	timeEntriesBody.Links.WorkPackage.Href = apiVersionStr + "work_packages/" + wpID
+	timeEntriesBody.Links.WorkPackage.Href = apiVersionStr + "work_packages/" + timeLogID
 	activityID = strings.Split(submission["activity"].(string), "opt")[1]
 	timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
 	timeEntriesBody.SpentOn = submission["spent_on"].(string)

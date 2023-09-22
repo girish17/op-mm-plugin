@@ -22,7 +22,7 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	case "/getTimeLog":
 		GetTimeLog(p.MattermostPlugin, r)
 	case "/delTimeLog":
-		NotImplemented(w)
+		DeleteTimeLog(p.MattermostPlugin, w, r, pluginURL)
 	case "/createWP":
 		NotImplemented(w)
 	case "/saveWP":

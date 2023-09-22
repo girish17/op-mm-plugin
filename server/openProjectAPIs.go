@@ -80,3 +80,15 @@ func GetTimeEntriesSchema(opURLStr string, apiKeyStr string) (*http.Response, er
 	}
 	return resp, err
 }
+
+func DelTimeLog(opURLStr string, apiKeyStr string, timeLogID string) (*http.Response, error) {
+	url := opURLStr + apiVersionStr + "time_entries/" + timeLogID
+	req, _ := http.NewRequest("DELETE", url, nil)
+	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
+	req.SetBasicAuth("apikey", apiKeyStr)
+	resp, err := client.Do(req)
+	if err != nil {
+		defer resp.Body.Close()
+	}
+	return resp, err
+}

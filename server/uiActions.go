@@ -22,7 +22,7 @@ var APIKeyStr string
 
 var projectID string
 
-var wpID string
+var timeLogID string
 
 var activityID string
 
@@ -185,15 +185,15 @@ func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 			p.API.LogInfo("action: " + action)
 		case "selected_option":
 			selectedOption = strings.Split(value.(string), "opt")
-			wpID = selectedOption[1]
-			p.API.LogInfo("selected option: " + wpID)
+			timeLogID = selectedOption[1]
+			p.API.LogInfo("selected option: " + timeLogID)
 		}
 	}
 	switch action {
 	case "showTimeLogDlg":
 		user, _ := p.API.GetUserByUsername(opBot)
 		var timeEntriesBody TimeEntriesBody
-		timeEntriesBody.Links.WorkPackage.Href = "/api/v3/work_packages/" + wpID
+		timeEntriesBody.Links.WorkPackage.Href = "/api/v3/work_packages/" + timeLogID
 		p.API.LogDebug("Time entries body: ", timeEntriesBody)
 		timeEntriesBodyJSON, _ := json.Marshal(timeEntriesBody)
 		resp, err := PostTimeEntriesForm(timeEntriesBodyJSON, OpURLStr, APIKeyStr)
@@ -377,6 +377,116 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 			p.API.LogInfo("Date incorrect: ", jsonBody["spent_on"])
 			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.DateIncorrectMsg)
 		}
+	}
+	_, _ = p.API.UpdatePost(post)
+}
+
+func DeleteTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, _ string) {
+	body, _ := io.ReadAll(r.Body)
+	var jsonBody map[string]interface{}
+	_ = json.Unmarshal(body, &jsonBody)
+	submission := jsonBody["context"].(map[string]interface{})
+	channelID := jsonBody["channel_id"].(string)
+	var action string
+	var selectedOption []string
+	for key, value := range submission {
+		switch key {
+		case "action":
+			action = value.(string)
+			p.API.LogInfo("action: " + action)
+		case "selected_option":
+			selectedOption = strings.Split(value.(string), "opt")
+			timeLogID = selectedOption[1]
+			p.API.LogInfo("selected option: " + timeLogID)
+		}
+	}
+	switch action {
+	case "delSelTimeLog":
+		delTimeLog(p, w, timeLogID, channelID)
+	case "cnfDelTimeLog":
+		cnfDelTimeLog(p, w, channelID)
+	default:
+		showTimeLogSel(p, w, channelID)
+	}
+}
+
+func cnfDelTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, channelID string) {
+	var attachmentMap map[string]interface{}
+	var post *model.Post
+	user, _ := p.API.GetUserByUsername(opBot)
+	post = getUpdatePostMsg(user.Id, channelID, messages.CnfDelTimeLogMsg)
+	_ = json.Unmarshal(getCnfDelBtnJSON(pluginURL+"/delTimeLog", "delSelTimeLog"), &attachmentMap)
+	post.SetProps(attachmentMap)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	_ = respHTTP.Write(w)
+	_, _ = p.API.UpdatePost(post)
+}
+
+func delTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, timeLogID string, channelID string) {
+	p.API.LogDebug("Deleting time log with ID: " + timeLogID)
+	resp, err := DelTimeLog(OpURLStr, APIKeyStr, timeLogID)
+	user, _ := p.API.GetUserByUsername(opBot)
+	var post *model.Post
+	if err == nil {
+		p.API.LogDebug("Time log delete response from OpenProject: ", resp.StatusCode)
+		switch resp.StatusCode {
+		case 204:
+			var attachmentMap map[string]interface{}
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelMsg)
+			_ = json.Unmarshal(getTimeLogDelMsgJSON(pluginURL), &attachmentMap)
+			post.SetProps(attachmentMap)
+		case 403:
+			p.API.LogError(messages.InsufficientPrivMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.InsufficientPrivMsg)
+		case 404:
+			p.API.LogError(messages.TimeEntryNotExist)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryNotExist)
+		default:
+			p.API.LogError(messages.TimeLogDelErrMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+		}
+	} else {
+		p.API.LogError(messages.TimeLogDelErrMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(resp.StatusCode)
+	_ = respHTTP.Write(w)
+	_, _ = p.API.UpdatePost(post)
+}
+
+func showTimeLogSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID string) {
+	resp, err := GetTimeEntries(OpURLStr, APIKeyStr)
+	user, _ := p.API.GetUserByUsername(opBot)
+	var post *model.Post
+	if err == nil {
+		opResBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		var opJSONRes TimeEntryList
+		_ = json.Unmarshal(opResBody, &opJSONRes)
+		p.API.LogDebug("Time entries response from OpenProject: ", opJSONRes)
+		if opJSONRes.Type != "Error" {
+			var attachmentMap map[string]interface{}
+			var options = getOptArrayForTimeLogElements(opJSONRes.Embedded.Elements)
+			p.API.LogInfo("Time entries KV : ", options)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogSelMsg)
+			_ = json.Unmarshal(getTimeLogOptJSON(pluginURL, "cnfDelTimeLog", options), &attachmentMap)
+			post.SetProps(attachmentMap)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(200)
+			_ = respHTTP.Write(w)
+		} else {
+			p.API.LogError(messages.TimeEntryFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		p.API.LogError(messages.TimeEntryFailMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 	_, _ = p.API.UpdatePost(post)
 }

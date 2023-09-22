@@ -15,6 +15,12 @@ var messages = struct {
 	DlgCancelMsg         string
 	NotImplemented       string
 	LogTimeSuccessMsg    string
+	TimeLogSelMsg        string
+	CnfDelTimeLogMsg     string
+	TimeLogDelMsg        string
+	TimeLogDelErrMsg     string
+	InsufficientPrivMsg  string
+	TimeEntryNotExist    string
 }{
 	OpAuthFailMsg:        "OpenProject authentication failed. Please try again.",
 	ProjectSelMsg:        "*Please select a project*",
@@ -30,4 +36,10 @@ var messages = struct {
 	DlgCancelMsg:         "** If you would like to try again then, `/op` **",
 	NotImplemented:       "Not yet implemented. Donate at https://www.paypal.me/girishm17 :wave:",
 	LogTimeSuccessMsg:    "\n**Time logged! You are awesome :sunglasses: **\n To view time logged try `/op",
+	TimeLogSelMsg:        "*Please select a time log*",
+	CnfDelTimeLogMsg:     "**Confirm time log deletion?**",
+	TimeLogDelMsg:        "**Time log deleted!**",
+	TimeLogDelErrMsg:     "**That didn't work :pensive: Couldn't delete time log\n Please try again...`/op`**",
+	InsufficientPrivMsg:  "**You don't have sufficient privileges to do that :pensive: **",
+	TimeEntryNotExist:    "** Time entry does not exist or you don't have sufficient privileges to see it :pensive: **",
 }
