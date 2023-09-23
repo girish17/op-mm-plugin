@@ -24,9 +24,17 @@ var projectID string
 
 var timeLogID string
 
+var typeID string
+
 var timeEntry string
 
+var wpEntry string
+
+var wpID string
+
 var activityID string
+
+var assigneeID string
 
 var customFieldForBillableHours string
 
@@ -82,7 +90,7 @@ func OpAuth(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
 	menuPost, _ = p.API.CreatePost(post)
 }
 
-func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
+func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string, action string) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
 	_ = json.Unmarshal(body, &jsonBody)
@@ -101,7 +109,7 @@ func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string
 			var options = getOptArrayForProjectElements(opJSONRes.Embedded.Elements)
 			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ProjectSelMsg)
 			var attachmentMap map[string]interface{}
-			_ = json.Unmarshal(getProjectOptAttachmentJSON(pluginURL, "showSelWP", options), &attachmentMap)
+			_ = json.Unmarshal(getProjectOptAttachmentJSON(pluginURL, action, options), &attachmentMap)
 			post.SetProps(attachmentMap)
 		} else {
 			p.API.LogError(messages.ProjectFailMsg)
@@ -115,7 +123,7 @@ func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string
 	_, _ = p.API.UpdatePost(post)
 }
 
-func WPHandler(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, pluginURL string) {
+func WPHandler(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
 	_ = json.Unmarshal(body, &jsonBody)
@@ -136,40 +144,127 @@ func WPHandler(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request
 	}
 	switch action {
 	case "showSelWP":
-		user, _ := p.API.GetUserByUsername(opBot)
-		resp, err := GetWPsForProject(projectID, OpURLStr, APIKeyStr)
-		var post *model.Post
-		if err == nil {
-			opResBody, _ := io.ReadAll(resp.Body)
-			defer resp.Body.Close()
-			var opJSONRes WorkPackages
-			_ = json.Unmarshal(opResBody, &opJSONRes)
-			p.API.LogInfo("Work packages response from op-mattermost: ", opJSONRes)
-			if opJSONRes.Type != "Error" {
-				p.API.LogInfo("Work packages obtained from OP: ", opJSONRes.Embedded.Elements)
-				var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
-				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPSelMsg)
-				var attachmentMap map[string]interface{}
-				_ = json.Unmarshal(getWPOptAttachmentJSON(pluginURL, "showTimeLogDlg", options), &attachmentMap)
-				post.SetProps(attachmentMap)
-				w.Header().Set("Content-Type", "application/json; charset=utf-8")
-				w.WriteHeader(200)
-				_ = respHTTP.Write(w)
-			} else {
-				p.API.LogError(messages.WPFailMsg)
-				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
-			}
-		} else {
-			p.API.LogError("Failed to fetch work packages from OpenProject: ", err)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
-		}
-
-		_, _ = p.API.UpdatePost(post)
+		showSelWP(p, w, jsonBody)
 	case "createWP":
-		http.NotFound(w, r)
+		createWP(p, w, jsonBody)
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[string]interface{}) {
+	user, _ := p.API.GetUserByUsername(opBot)
+	resp, err := GetWPsForProject(projectID, OpURLStr, APIKeyStr)
+	var post *model.Post
+	if err == nil {
+		opResBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		var opJSONRes WorkPackages
+		_ = json.Unmarshal(opResBody, &opJSONRes)
+		p.API.LogInfo("Work packages response from op-mattermost: ", opJSONRes)
+		if opJSONRes.Type != "Error" {
+			p.API.LogInfo("Work packages obtained from OP: ", opJSONRes.Embedded.Elements)
+			var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
+			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPSelMsg)
+			var attachmentMap map[string]interface{}
+			_ = json.Unmarshal(getWPOptAttachmentJSON(pluginURL, "showTimeLogDlg", options), &attachmentMap)
+			post.SetProps(attachmentMap)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(200)
+			_ = respHTTP.Write(w)
+		} else {
+			p.API.LogError(messages.WPFailMsg)
+			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
+		}
+	} else {
+		p.API.LogError("Failed to fetch work packages from OpenProject: ", err)
+		post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
+	}
+	_, _ = p.API.UpdatePost(post)
+}
+
+func createWP(p plugin.MattermostPlugin, _ http.ResponseWriter, jsonBody map[string]interface{}) {
+	user, _ := p.API.GetUserByUsername(opBot)
+	channelID := jsonBody["channel_id"].(string)
+	resp, err := GetTypes(OpURLStr, APIKeyStr)
+	var post *model.Post
+	if err == nil {
+		opResBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		var opJSONRes Types
+		_ = json.Unmarshal(opResBody, &opJSONRes)
+		p.API.LogInfo("Types response from OP: ", opJSONRes)
+		if opJSONRes.Type != "Error" {
+			var typesOptions = getOptArrayForTypes(opJSONRes.Embedded.Elements)
+			resp1, err1 := GetAvailableAssignees(OpURLStr, APIKeyStr, projectID)
+			if err1 == nil {
+				opResBody1, _ := io.ReadAll(resp1.Body)
+				defer resp1.Body.Close()
+				var opJSONRes1 AvailableAssignees
+				_ = json.Unmarshal(opResBody1, &opJSONRes1)
+				p.API.LogInfo("Available assignees response from OP: ", opJSONRes1)
+				var availableAssigneesOptions = getOptArrayForAvailableAssignees(opJSONRes1.Embedded.Elements)
+				triggerID := jsonBody["trigger_id"].(string)
+				openCreateWPDialog(p, triggerID, pluginURL, typesOptions, availableAssigneesOptions)
+				post = getUpdatePostMsg(user.Id, channelID, "Opening WP create dialog...")
+				_, _ = p.API.UpdatePost(post)
+			} else {
+				p.API.LogError(messages.AssigneeFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.AssigneeFailMsg)
+				_, _ = p.API.UpdatePost(post)
+			}
+		} else {
+			p.API.LogError(messages.TypesFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TypesFailMsg)
+			_, _ = p.API.UpdatePost(post)
+		}
+	}
+}
+
+func SaveWP(p plugin.MattermostPlugin, r *http.Request) {
+	body, _ := io.ReadAll(r.Body)
+	var jsonBody map[string]interface{}
+	_ = json.Unmarshal(body, &jsonBody)
+	channelID := jsonBody["channel_id"].(string)
+	p.API.LogInfo("Submission data: ", jsonBody)
+	dialogCancelled := jsonBody["cancelled"].(bool)
+	user, _ := p.API.GetUserByUsername(opBot)
+	var post *model.Post
+	if dialogCancelled {
+		p.API.LogInfo("Save WP dialog cancelled by user.")
+		post = getUpdatePostMsg(user.Id, channelID, messages.DlgCancelMsg)
+	} else {
+		submission := jsonBody["submission"].(map[string]interface{})
+		p.API.LogInfo("WP submission data: ", submission)
+		wpJSON, _ := GetWPBodyJSON(submission)
+		p.API.LogDebug("WP body JSON: ", string(wpJSON))
+		notify := strconv.FormatBool(submission["notify"].(bool))
+		resp, err := PostWP(wpJSON, OpURLStr, APIKeyStr, notify)
+		if err == nil {
+			switch resp.StatusCode {
+			case 201:
+				p.API.LogInfo(messages.SaveWPSuccessMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.SaveWPSuccessMsg)
+			case 403:
+				p.API.LogError(messages.WPCreateForbiddenMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.WPCreateForbiddenMsg)
+			case 404:
+				p.API.LogError(messages.WPNotExist)
+				post = getUpdatePostMsg(user.Id, channelID, messages.WPNotExist)
+			case 422:
+				p.API.LogError(messages.WPTypeErrMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.WPTypeErrMsg)
+			default:
+				p.API.LogError(messages.UnknownStatusCode)
+				post = getUpdatePostMsg(user.Id, channelID, messages.UnknownStatusCode)
+			}
+		} else {
+			p.API.LogError(messages.GenericErrMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.GenericErrMsg)
+		}
+		defer resp.Body.Close()
+	}
+	_, _ = p.API.UpdatePost(post)
 }
 
 func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, pluginURL string) {
@@ -178,6 +273,7 @@ func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 	_ = json.Unmarshal(body, &jsonBody)
 	triggerID := jsonBody["trigger_id"].(string)
 	submission := jsonBody["context"].(map[string]interface{})
+	channelID := jsonBody["channel_id"].(string)
 	var action string
 	var selectedOption []string
 	for key, value := range submission {
@@ -186,7 +282,7 @@ func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 			action = value.(string)
 			p.API.LogInfo("action: " + action)
 		case "selected_option":
-			selectedOption = strings.Split(value.(string), "opt")
+			selectedOption = strings.Split(value.(string), "|:-")
 			timeLogID = selectedOption[1]
 			p.API.LogInfo("selected option: " + timeLogID)
 		}
@@ -209,23 +305,32 @@ func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 			if opJSONRes.Type != "Error" {
 				var options = getOptArrayForAllowedValues(opJSONRes.Embedded.Schema.Activity.Embedded.AllowedValues)
 				openLogTimeDialog(p, triggerID, pluginURL, options)
-				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), "Opening time log dialog...")
+				post = getUpdatePostMsg(user.Id, channelID, "Opening time log dialog...")
 				_, _ = p.API.UpdatePost(post)
 			} else {
 				p.API.LogError(messages.ActivityFailMsg)
-				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ActivityFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.ActivityFailMsg)
 				_, _ = p.API.UpdatePost(post)
 			}
 		} else {
 			p.API.LogError(messages.ActivityFailMsg)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ActivityFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.ActivityFailMsg)
 			_, _ = p.API.UpdatePost(post)
 		}
-
 	case "cnfDelWP":
-		http.NotFound(w, r)
+		cnfDelWP(p, w, channelID)
 	default:
 		http.NotFound(w, r)
+	}
+}
+
+func openCreateWPDialog(p plugin.MattermostPlugin, triggerID string, pluginURL string, types []*model.PostActionOptions, assignees []*model.PostActionOptions) {
+	p.API.LogInfo("Types from op-mattermost: ", types)
+	p.API.LogInfo("Assignees from op-mattermost: ", assignees)
+	p.API.LogDebug("Trigger ID for log time dialog: ", triggerID)
+	err := p.API.OpenInteractiveDialog(GetWPCreateDlg(pluginURL, triggerID, types, assignees))
+	if err != nil {
+		p.API.LogError("Error creating create WP dialog", err)
 	}
 }
 
@@ -317,7 +422,7 @@ func Logout(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 	_ = respHTTP.Write(w)
 }
 
-func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.Request, _ string) {
+func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
 	_ = json.Unmarshal(body, &jsonBody)
@@ -367,7 +472,7 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 	_, _ = p.API.UpdatePost(post)
 }
 
-func DeleteTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, _ string) {
+func DeleteWorkPackage(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
 	_ = json.Unmarshal(body, &jsonBody)
@@ -381,7 +486,117 @@ func DeleteTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Req
 			action = value.(string)
 			p.API.LogInfo("action: " + action)
 		case "selected_option":
-			selectedOption = strings.Split(value.(string), "|")
+			selectedOption = strings.Split(value.(string), "|:-")
+			wpEntry = selectedOption[0]
+			wpID = selectedOption[1]
+			p.API.LogInfo("selected option: " + wpID)
+		}
+	}
+	switch action {
+	case "delWP":
+		delWP(p, w, wpID, channelID)
+	case "cnfDelWP":
+		cnfDelWP(p, w, channelID)
+	default:
+		showDelWPSel(p, w, channelID)
+	}
+}
+
+func delWP(p plugin.MattermostPlugin, w http.ResponseWriter, wpID string, channelID string) {
+	p.API.LogDebug("Deleting WP with ID: " + wpID)
+	resp, err := DelWP(OpURLStr, APIKeyStr, wpID)
+	user, _ := p.API.GetUserByUsername(opBot)
+	var post *model.Post
+	if err == nil {
+		p.API.LogDebug("Work package delete response from OpenProject: ", resp.StatusCode)
+		switch resp.StatusCode {
+		case 204:
+			p.API.LogInfo(messages.WPLogDelMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.WPLogDelMsg)
+		case 403:
+			p.API.LogError(messages.InsufficientPrivMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.InsufficientPrivMsg)
+		case 404:
+			p.API.LogError(messages.TimeEntryNotExist)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryNotExist)
+		default:
+			p.API.LogError(messages.TimeLogDelErrMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+		}
+	} else {
+		p.API.LogError(messages.WPDelErrMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.WPDelErrMsg)
+	}
+	defer resp.Body.Close()
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(resp.StatusCode)
+	_ = respHTTP.Write(w)
+	_, _ = p.API.UpdatePost(post)
+}
+
+func showDelWPSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID string) {
+	resp, err := GetWorkPackages(OpURLStr, APIKeyStr)
+	user, _ := p.API.GetUserByUsername(opBot)
+	var post *model.Post
+	if err == nil {
+		opResBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		var opJSONRes WorkPackages
+		_ = json.Unmarshal(opResBody, &opJSONRes)
+		p.API.LogDebug("Work package list response from OpenProject: ", opJSONRes)
+		if opJSONRes.Type != "Error" {
+			var attachmentMap map[string]interface{}
+			var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
+			p.API.LogInfo("Work packages KV : ", options)
+			post = getUpdatePostMsg(user.Id, channelID, messages.WPLogSelMsg)
+			_ = json.Unmarshal(getWPOptJSON(pluginURL, "cnfDelWP", options), &attachmentMap)
+			post.SetProps(attachmentMap)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(200)
+			_ = respHTTP.Write(w)
+		} else {
+			p.API.LogError(messages.WPFetchFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.WPFetchFailMsg)
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		p.API.LogError(messages.WPFetchFailMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.WPFetchFailMsg)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+	_, _ = p.API.UpdatePost(post)
+}
+
+func cnfDelWP(p plugin.MattermostPlugin, w http.ResponseWriter, channelID string) {
+	var attachmentMap map[string]interface{}
+	var post *model.Post
+	user, _ := p.API.GetUserByUsername(opBot)
+	post = getUpdatePostMsg(user.Id, channelID, messages.CnfWPLogMsg+"\n"+wpEntry)
+	_ = json.Unmarshal(getCnfDelBtnJSON(pluginURL+"/delWP", "delWP"), &attachmentMap)
+	post.SetProps(attachmentMap)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	_ = respHTTP.Write(w)
+	_, _ = p.API.UpdatePost(post)
+}
+
+func DeleteTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
+	body, _ := io.ReadAll(r.Body)
+	var jsonBody map[string]interface{}
+	_ = json.Unmarshal(body, &jsonBody)
+	submission := jsonBody["context"].(map[string]interface{})
+	channelID := jsonBody["channel_id"].(string)
+	var action string
+	var selectedOption []string
+	for key, value := range submission {
+		switch key {
+		case "action":
+			action = value.(string)
+			p.API.LogInfo("action: " + action)
+		case "selected_option":
+			selectedOption = strings.Split(value.(string), "|:-")
 			timeEntry = selectedOption[0]
 			timeLogID = selectedOption[1]
 			p.API.LogInfo("selected option: " + timeLogID)
@@ -479,8 +694,14 @@ func showTimeLogSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID 
 	_, _ = p.API.UpdatePost(post)
 }
 
-func NotImplemented(w http.ResponseWriter) {
+func NotifyChannel(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
+	body, _ := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	var opJSONRes Notification
+	_ = json.Unmarshal(body, &opJSONRes)
+	p.API.LogDebug("Request body from OpenProject Webhooks: ", opJSONRes)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusNotFound)
-	_, _ = w.Write([]byte(messages.ByeMsg))
+	w.WriteHeader(200)
+	_, _ = w.Write(body)
+	_ = respHTTP.Write(w)
 }

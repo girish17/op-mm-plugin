@@ -12,23 +12,25 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	case "/opAuth":
 		OpAuth(p.MattermostPlugin, r, pluginURL)
 	case "/createTimeLog":
-		ShowSelProject(p.MattermostPlugin, r, pluginURL)
+		ShowSelProject(p.MattermostPlugin, r, pluginURL, "showSelWP")
 	case "/projSel":
-		WPHandler(p.MattermostPlugin, w, r, pluginURL)
+		WPHandler(p.MattermostPlugin, w, r)
 	case "/wpSel":
 		LoadTimeLogDlg(p.MattermostPlugin, w, r, pluginURL)
 	case "/logTime":
-		HandleSubmission(p.MattermostPlugin, w, r, pluginURL)
+		HandleSubmission(p.MattermostPlugin, w, r)
 	case "/getTimeLog":
 		GetTimeLog(p.MattermostPlugin, r)
 	case "/delTimeLog":
-		DeleteTimeLog(p.MattermostPlugin, w, r, pluginURL)
+		DeleteTimeLog(p.MattermostPlugin, w, r)
 	case "/createWP":
-		NotImplemented(w)
+		ShowSelProject(p.MattermostPlugin, r, pluginURL, "createWP")
 	case "/saveWP":
-		NotImplemented(w)
+		SaveWP(p.MattermostPlugin, r)
 	case "/delWP":
-		NotImplemented(w)
+		DeleteWorkPackage(p.MattermostPlugin, w, r)
+	case "/notifyChannel":
+		NotifyChannel(p.MattermostPlugin, w, r)
 	case "/bye":
 		Logout(p.MattermostPlugin, w, r)
 	default:

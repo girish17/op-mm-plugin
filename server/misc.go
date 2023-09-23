@@ -71,6 +71,35 @@ func getWPOptAttachmentJSON(pluginURL string, action string, options []Option) [
 	return attachmentsJSON
 }
 
+func getWPOptJSON(pluginURL string, action string, options []Option) []byte {
+	attachments := OptAttachments{Attachments: []Attachment{
+		{
+			Actions: []Action{
+				{
+					Name: "Type to search for a work package...",
+					Integration: Integration{
+						URL: pluginURL + "/delWP",
+						Context: Context{
+							Action: action,
+						},
+					},
+					Type:    "select",
+					Options: options,
+				},
+				{
+					Name: "Cancel search",
+					Integration: Integration{
+						URL: pluginURL + "/bye",
+					},
+				},
+			},
+		},
+	},
+	}
+	attachmentsJSON, _ := json.Marshal(attachments)
+	return attachmentsJSON
+}
+
 func getTimeLogOptJSON(pluginURL string, action string, options []Option) []byte {
 	attachments := OptAttachments{Attachments: []Attachment{
 		{
@@ -177,7 +206,7 @@ func getOptArrayForWPElements(elements []Element) []Option {
 		id := strconv.Itoa(element.ID)
 		options = append(options, Option{
 			Text:  element.Subject,
-			Value: "opt" + id,
+			Value: element.Subject + "|:-" + id,
 		})
 	}
 	return options
@@ -197,7 +226,7 @@ func getOptArrayForTimeLogElements(elements []TimeElement) []Option {
 		text += element.Links.Project.Title
 		options = append(options, Option{
 			Text:  text,
-			Value: text + "|" + id,
+			Value: text + "|:-" + id,
 		})
 	}
 	return options
@@ -209,6 +238,30 @@ func getOptArrayForAllowedValues(allowedValues []AllowedValues) []*model.PostAct
 		id := strconv.Itoa(value.ID)
 		postActionOptions = append(postActionOptions, &model.PostActionOptions{
 			Text:  value.Name,
+			Value: "opt" + id,
+		})
+	}
+	return postActionOptions
+}
+
+func getOptArrayForTypes(types []TypeElement) []*model.PostActionOptions {
+	var postActionOptions []*model.PostActionOptions
+	for _, value := range types {
+		id := strconv.Itoa(value.ID)
+		postActionOptions = append(postActionOptions, &model.PostActionOptions{
+			Text:  value.Name,
+			Value: "opt" + id,
+		})
+	}
+	return postActionOptions
+}
+
+func getOptArrayForAvailableAssignees(assignees []AvailableAssigneesElement) []*model.PostActionOptions {
+	var postActionOptions []*model.PostActionOptions
+	for _, value := range assignees {
+		id := strconv.Itoa(value.ID)
+		postActionOptions = append(postActionOptions, &model.PostActionOptions{
+			Text:  value.FirstName + " " + value.LastName,
 			Value: "opt" + id,
 		})
 	}
@@ -294,6 +347,19 @@ func GetTimeEntriesBodyJSON(submission map[string]interface{}, loggedHours strin
 	timeEntriesBody.Hours = fmt.Sprintf("PT%fH", loggedHoursDuration.Hours())
 	timeEntriesBody.CustomField = billableHours
 	return json.Marshal(timeEntriesBody)
+}
+
+func GetWPBodyJSON(submission map[string]interface{}) ([]byte, error) {
+	var workPackagePostBody WorkPackagePostBody
+	workPackagePostBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
+	typeID = strings.Split(submission["type"].(string), "opt")[1]
+	workPackagePostBody.Links.Type.Href = apiVersionStr + "types/" + typeID
+	workPackagePostBody.Subject = submission["subject"].(string)
+	assigneeID = strings.Split(submission["assignee"].(string), "opt")[1]
+	if submission["assignee"] != nil {
+		workPackagePostBody.Assignee.Href = apiVersionStr + "users/" + assigneeID
+	}
+	return json.Marshal(workPackagePostBody)
 }
 
 func getUpdatePostMsg(userID string, channelID string, msg string) *model.Post {

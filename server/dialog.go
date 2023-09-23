@@ -89,3 +89,46 @@ func GetOpAuthDlg(pluginURL string, triggerID string, logoURL string) model.Open
 		},
 	}
 }
+
+func GetWPCreateDlg(pluginURL string, triggerID string, types []*model.PostActionOptions, assignees []*model.PostActionOptions) model.OpenDialogRequest {
+	return model.OpenDialogRequest{
+		TriggerId: triggerID,
+		URL:       pluginURL + "/saveWP",
+		Dialog: model.Dialog{
+			CallbackId:       "create_wp_dlg",
+			Title:            "Create a work package",
+			IntroductionText: "Create a work package by providing following details",
+			IconURL:          pluginURL + "/public/op_logo.jpg",
+			Elements: []model.DialogElement{{
+				DisplayName: "Subject",
+				Name:        "subject",
+				Type:        "text",
+				Placeholder: "Name of work package",
+				HelpText:    "Please enter date within last one year and in YYYY-MM-DD format",
+			}, {
+				DisplayName: "Select Type",
+				Name:        "type",
+				Type:        "select",
+				Default:     types[0].Value,
+				Placeholder: "Type to search for type",
+				Options:     types,
+			}, {
+				DisplayName: "Assignee",
+				Name:        "assignee",
+				Type:        "select",
+				Placeholder: "Type to search for users",
+				Options:     assignees,
+				Optional:    true,
+			}, {
+				DisplayName: "Notify interested users?",
+				Name:        "notify",
+				Type:        "bool",
+				Placeholder: "Send email",
+				HelpText:    "Note that this controls notifications for all users interested in changes to the work package (e.g. current user, watchers, author and assignee)",
+				Optional:    true,
+			}},
+			SubmitLabel:    "Create Work Package",
+			NotifyOnCancel: true,
+		},
+	}
+}

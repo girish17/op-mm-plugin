@@ -21,6 +21,19 @@ var messages = struct {
 	TimeLogDelErrMsg     string
 	InsufficientPrivMsg  string
 	TimeEntryNotExist    string
+	AssigneeFailMsg      string
+	TypesFailMsg         string
+	WPCreateForbiddenMsg string
+	WPTypeErrMsg         string
+	GenericErrMsg        string
+	SaveWPSuccessMsg     string
+	WPNotExist           string
+	WPLogDelMsg          string
+	WPDelErrMsg          string
+	WPLogSelMsg          string
+	WPFetchFailMsg       string
+	CnfWPLogMsg          string
+	UnknownStatusCode    string
 }{
 	OpAuthFailMsg:        "OpenProject authentication failed. Please try again.",
 	ProjectSelMsg:        "*Please select a project*",
@@ -42,4 +55,17 @@ var messages = struct {
 	TimeLogDelErrMsg:     "**That didn't work :pensive: Couldn't delete time log\n Please try again...`/op`**",
 	InsufficientPrivMsg:  "**You don't have sufficient privileges to do that :pensive: **",
 	TimeEntryNotExist:    "** Time entry does not exist or you don't have sufficient privileges to see it :pensive: **",
+	AssigneeFailMsg:      "**That didn't work :pensive: Couldn't to fetch available assignees from OP**",
+	TypesFailMsg:         "**That didn't work :pensive: Couldn't to fetch types from OP**",
+	WPCreateForbiddenMsg: "**It seems that you don't have permission to create work package for this project :confused: **",
+	WPTypeErrMsg:         "**Work package type is not set to one of the allowed values. Couldn't create work package :pensive: **",
+	GenericErrMsg:        "** Unknown error occurred :pensive: Can you please try again? **",
+	SaveWPSuccessMsg:     "\n**Work package created! You are awesome :sunglasses: **\n To log time for a work package try `/op`",
+	WPNotExist:           "**Work package does not exist or you don't have sufficient privileges to see it :pensive: **",
+	WPLogDelMsg:          "\n**Work package deleted!**",
+	WPDelErrMsg:          "**That didn't work :pensive: Couldn't delete work package\n Please try again... `/op`**",
+	WPLogSelMsg:          "*Please select a work package*",
+	WPFetchFailMsg:       "**That didn't work :pensive: Couldn't fetch work packages from OP**",
+	CnfWPLogMsg:          "**Confirm work package deletion?**",
+	UnknownStatusCode:    "**Unknown status code - error occurred** :pensive:",
 }
