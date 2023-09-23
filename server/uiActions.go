@@ -64,6 +64,7 @@ func OpAuth(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
 		_ = p.API.KVDelete(OpURLStr)
 		_ = p.API.KVDelete(APIKeyStr)
 
+		channelID := jsonBody["channel_id"].(string)
 		resp, err := GetUserDetails(OpURLStr, APIKeyStr)
 		if err == nil {
 			opResBody, _ := io.ReadAll(resp.Body)
@@ -74,17 +75,17 @@ func OpAuth(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
 			if opJSONRes["_type"] != "Error" {
 				p.API.LogDebug("Setting MM and OP user id pair: ", mmUserID, opUserID)
 				_ = p.API.KVSet(mmUserID, opUserID)
-				post = getCreatePostMsg(user.Id, jsonBody["channel_id"].(string), "Hello "+opJSONRes["firstName"]+" :)")
+				post = getCreatePostMsg(user.Id, channelID, "Hello "+opJSONRes["firstName"]+" :)")
 				var attachmentMap map[string]interface{}
 				_ = json.Unmarshal([]byte(GetAttachmentJSON(pluginURL)), &attachmentMap)
 				post.SetProps(attachmentMap)
 			} else {
 				p.API.LogError(opJSONRes["errorIdentifier"] + " " + opJSONRes["message"])
-				post = getCreatePostMsg(user.Id, jsonBody["channel_id"].(string), opJSONRes["message"])
+				post = getCreatePostMsg(user.Id, channelID, opJSONRes["message"])
 			}
 		} else {
 			p.API.LogError("OpenProject login failed: ", err)
-			post = getCreatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.OpAuthFailMsg)
+			post = getCreatePostMsg(user.Id, channelID, messages.OpAuthFailMsg)
 		}
 	}
 	menuPost, _ = p.API.CreatePost(post)
@@ -96,6 +97,7 @@ func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string
 	_ = json.Unmarshal(body, &jsonBody)
 	p.API.LogInfo("apikey: " + APIKeyStr + " opURL: " + OpURLStr)
 	user, _ := p.API.GetUserByUsername(opBot)
+	channelID := jsonBody["channel_id"].(string)
 	resp, err := GetProjects(OpURLStr, APIKeyStr)
 	var post *model.Post
 	if err == nil {
@@ -107,17 +109,17 @@ func ShowSelProject(p plugin.MattermostPlugin, r *http.Request, pluginURL string
 		if opJSONRes.Type != "Error" {
 			p.API.LogInfo("Projects obtained from OP: ", opJSONRes.Embedded.Elements)
 			var options = getOptArrayForProjectElements(opJSONRes.Embedded.Elements)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ProjectSelMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.ProjectSelMsg)
 			var attachmentMap map[string]interface{}
 			_ = json.Unmarshal(getProjectOptAttachmentJSON(pluginURL, action, options), &attachmentMap)
 			post.SetProps(attachmentMap)
 		} else {
 			p.API.LogError(messages.ProjectFailMsg)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ProjectFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.ProjectFailMsg)
 		}
 	} else {
 		p.API.LogError(messages.ProjectFailMsg, err)
-		post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ProjectFailMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.ProjectFailMsg)
 	}
 
 	_, _ = p.API.UpdatePost(post)
@@ -154,6 +156,7 @@ func WPHandler(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request
 
 func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[string]interface{}) {
 	user, _ := p.API.GetUserByUsername(opBot)
+	channelID := jsonBody["channel_id"].(string)
 	resp, err := GetWPsForProject(projectID, OpURLStr, APIKeyStr)
 	var post *model.Post
 	if err == nil {
@@ -165,7 +168,7 @@ func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[st
 		if opJSONRes.Type != "Error" {
 			p.API.LogInfo("Work packages obtained from OP: ", opJSONRes.Embedded.Elements)
 			var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPSelMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.WPSelMsg)
 			var attachmentMap map[string]interface{}
 			_ = json.Unmarshal(getWPOptAttachmentJSON(pluginURL, "showTimeLogDlg", options), &attachmentMap)
 			post.SetProps(attachmentMap)
@@ -174,11 +177,11 @@ func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[st
 			_ = respHTTP.Write(w)
 		} else {
 			p.API.LogError(messages.WPFailMsg)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.WPFailMsg)
 		}
 	} else {
 		p.API.LogError("Failed to fetch work packages from OpenProject: ", err)
-		post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.WPFailMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.WPFailMsg)
 	}
 	_, _ = p.API.UpdatePost(post)
 }
@@ -348,6 +351,7 @@ func GetTimeLog(p plugin.MattermostPlugin, r *http.Request) {
 	var jsonBody map[string]interface{}
 	_ = json.Unmarshal(body, &jsonBody)
 	user, _ := p.API.GetUserByUsername(opBot)
+	channelID := jsonBody["channel_id"].(string)
 	resp, err := GetTimeEntries(OpURLStr, APIKeyStr)
 	var post *model.Post
 	if err == nil {
@@ -359,16 +363,16 @@ func GetTimeLog(p plugin.MattermostPlugin, r *http.Request) {
 		if opJSONRes.Type != "Error" {
 			var timeLogs = getOptArrayForTimeEntries(opJSONRes.Embedded.Elements)
 			p.API.LogInfo("Time entries from op-mattermost: ", timeLogs)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), timeLogs)
+			post = getUpdatePostMsg(user.Id, channelID, timeLogs)
 			_, _ = p.API.UpdatePost(post)
 		} else {
 			p.API.LogError(messages.TimeEntryFailMsg)
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntryFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
 			_, _ = p.API.UpdatePost(post)
 		}
 	} else {
 		p.API.LogError(messages.TimeEntryFailMsg)
-		post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntryFailMsg)
+		post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
 		_, _ = p.API.UpdatePost(post)
 	}
 }
@@ -429,6 +433,7 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 	p.API.LogInfo("Submission data: ", jsonBody)
 	dialogCancelled := jsonBody["cancelled"].(bool)
 	user, _ := p.API.GetUserByUsername(opBot)
+	channelID := jsonBody["channel_id"].(string)
 	var post *model.Post
 	if dialogCancelled {
 		p.API.LogInfo("Log time dialog cancelled by user.")
@@ -451,22 +456,22 @@ func HandleSubmission(p plugin.MattermostPlugin, _ http.ResponseWriter, r *http.
 					p.API.LogDebug("Time entries response from OpenProject: ", opJSONRes)
 					if opJSONRes.Type != "Error" {
 						p.API.LogInfo("Time logged. Save response: ")
-						post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), "Time entry ID - "+strconv.Itoa(opJSONRes.ID)+messages.LogTimeSuccessMsg)
+						post = getUpdatePostMsg(user.Id, channelID, "Time entry ID - "+strconv.Itoa(opJSONRes.ID)+messages.LogTimeSuccessMsg)
 					} else {
 						p.API.LogError(messages.TimeEntrySaveFailMsg)
-						post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntrySaveFailMsg)
+						post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntrySaveFailMsg)
 					}
 				} else {
 					p.API.LogError(messages.TimeEntrySaveFailMsg)
-					post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.TimeEntrySaveFailMsg)
+					post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntrySaveFailMsg)
 				}
 			} else {
 				p.API.LogInfo("Billable hours incorrect: ", billableHours)
-				post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.BillableHourMsg)
+				post = getUpdatePostMsg(user.Id, channelID, messages.BillableHourMsg)
 			}
 		} else {
 			p.API.LogInfo("Date incorrect: ", jsonBody["spent_on"])
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.DateIncorrectMsg)
+			post = getUpdatePostMsg(user.Id, channelID, messages.DateIncorrectMsg)
 		}
 	}
 	_, _ = p.API.UpdatePost(post)

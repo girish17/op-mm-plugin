@@ -5,6 +5,10 @@ Following enhancements (on top of the [existing slash command features](https://
 - Authentication for an OpenProject user through Mattermost
 - A directly installable plugin for Mattermost
 
+## Demo
+
+![Demo video](public/op-mattermost-demo.gif) recorded using [Peek](https://github.com/phw/peek).
+
 # Development setup
 - https://developers.mattermost.com/integrate/plugins/developer-setup/
 
