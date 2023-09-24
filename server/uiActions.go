@@ -34,8 +34,6 @@ var wpID string
 
 var activityID string
 
-var assigneeID string
-
 var customFieldForBillableHours string
 
 var timeEntriesSchema map[string]interface{}

@@ -260,9 +260,10 @@ func getOptArrayForAvailableAssignees(assignees []AvailableAssigneesElement) []*
 	var postActionOptions []*model.PostActionOptions
 	for _, value := range assignees {
 		id := strconv.Itoa(value.ID)
+		name := value.FirstName + " " + value.LastName
 		postActionOptions = append(postActionOptions, &model.PostActionOptions{
-			Text:  value.FirstName + " " + value.LastName,
-			Value: "opt" + id,
+			Text:  name,
+			Value: name + "|:-" + id,
 		})
 	}
 	return postActionOptions
@@ -355,9 +356,10 @@ func GetWPBodyJSON(submission map[string]interface{}) ([]byte, error) {
 	typeID = strings.Split(submission["type"].(string), "opt")[1]
 	workPackagePostBody.Links.Type.Href = apiVersionStr + "types/" + typeID
 	workPackagePostBody.Subject = submission["subject"].(string)
-	assigneeID = strings.Split(submission["assignee"].(string), "opt")[1]
+	assignee := strings.Split(submission["assignee"].(string), "|:-")
 	if submission["assignee"] != nil {
-		workPackagePostBody.Assignee.Href = apiVersionStr + "users/" + assigneeID
+		workPackagePostBody.Assignee.Href = apiVersionStr + "users/" + assignee[0]
+		workPackagePostBody.Assignee.Title = assignee[1]
 	}
 	return json.Marshal(workPackagePostBody)
 }

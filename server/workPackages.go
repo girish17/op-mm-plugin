@@ -21,6 +21,7 @@ type WorkPackagePostBody struct {
 	} `json:"_links"`
 	Subject  string `json:"subject"`
 	Assignee struct {
-		Href string `json:"href"`
+		Href  string `json:"href"`
+		Title string `json:"title"`
 	}
 }
