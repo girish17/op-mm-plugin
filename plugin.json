@@ -4,9 +4,9 @@
     "description": "OpenProject plugin for Mattermost",
     "homepage_url": "https://github.com/girish17/op-mm-plugin",
     "support_url": "https://github.com/girish17/op-mm-plugin/issues",
-    "release_notes_url": "https://github.com/girish17/op-mm-plugin/releases/tag/v0.1.0",
+    "release_notes_url": "https://github.com/girish17/op-mm-plugin/releases/tag/v0.2.1",
     "icon_path": "assets/op_logo.svg",
-    "version": "0.1.0",
+    "version": "0.2.1",
     "min_server_version": "6.2.1",
     "server": {
         "executables": {
