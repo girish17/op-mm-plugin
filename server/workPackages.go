@@ -39,5 +39,5 @@ type WorkPackagePostBody struct {
 	Assignee struct {
 		Href  string `json:"href"`
 		Title string `json:"title"`
-	}
+	} `json:"assignee"`
 }

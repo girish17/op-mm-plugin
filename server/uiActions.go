@@ -257,6 +257,7 @@ func SaveWP(p plugin.MattermostPlugin, r *http.Request) {
 		p.API.LogDebug("WP body JSON: ", string(wpJSON))
 		notify := strconv.FormatBool(submission["notify"].(bool))
 		resp, err := PostWP(wpJSON, OpURLStr, APIKeyStr, notify)
+		saveWPBody, _ := io.ReadAll(resp.Body)
 		if err == nil {
 			switch resp.StatusCode {
 			case 201:

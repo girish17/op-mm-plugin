@@ -374,8 +374,8 @@ func GetWPBodyJSON(submission map[string]interface{}) ([]byte, error) {
 	workPackagePostBody.Subject = submission["subject"].(string)
 	assignee := strings.Split(submission["assignee"].(string), "|:-")
 	if submission["assignee"] != nil {
-		workPackagePostBody.Assignee.Href = apiVersionStr + "users/" + assignee[0]
-		workPackagePostBody.Assignee.Title = assignee[1]
+		workPackagePostBody.Assignee.Href = apiVersionStr + "users/" + assignee[1]
+		workPackagePostBody.Assignee.Title = assignee[0]
 	}
 	return json.Marshal(workPackagePostBody)
 }
