@@ -337,6 +337,15 @@ func GetAttachmentJSON(pluginURL string) string {
 						}
 					  },
 					  {
+						"name": "Subscribe to notifications",
+						"integration": {
+                         "url": "` + pluginURL + `/subscribe",
+						  "context": {
+							"action": ""
+						  }
+						}
+					  },
+					  {
 						"name": "Bye :wave:",
 						"integration": {
                           "url": "` + pluginURL + `/bye",

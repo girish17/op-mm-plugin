@@ -50,6 +50,7 @@ var messages = struct {
 	WPFetchFailMsg       string
 	CnfWPLogMsg          string
 	UnknownStatusCode    string
+	SubscribeMsg         string
 }{
 	OpAuthFailMsg:        "OpenProject authentication failed. Please try again.",
 	ProjectSelMsg:        "*Please select a project*",
@@ -84,4 +85,5 @@ var messages = struct {
 	WPFetchFailMsg:       "**That didn't work :pensive: Couldn't fetch work packages from OP**",
 	CnfWPLogMsg:          "**Confirm work package deletion?**",
 	UnknownStatusCode:    "**Unknown status code - error occurred** :pensive:",
+	SubscribeMsg:         "**Subscribed to OpenProject notifications :sunglasses: **",
 }

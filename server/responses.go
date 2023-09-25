@@ -39,6 +39,7 @@ type Action struct {
 
 type Attachment struct {
 	Actions []Action `json:"actions"`
+	Links   Links    `json:"_links"`
 }
 
 type OptAttachments struct {

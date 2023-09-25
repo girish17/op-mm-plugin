@@ -29,6 +29,7 @@ type Links struct {
 	Versions                   Categories        `json:"versions"`
 	Projects                   Categories        `json:"projects"`
 	Status                     Self              `json:"status"`
+	User                       Self              `json:"user"`
 }
 
 type CreateWorkPackage struct {

@@ -141,9 +141,12 @@ type EmbeddedTimeEntry struct {
 }
 
 type LinksTimeEntry struct {
-	Self     Self `json:"self"`
-	Validate Self `json:"validate"`
-	Commit   Self `json:"commit"`
+	Self        Self `json:"self"`
+	Validate    Self `json:"validate"`
+	Commit      Self `json:"commit"`
+	Project     Self `json:"project"`
+	User        Self `json:"user"`
+	WorkPackage Self `json:"workPackage"`
 }
 
 type TimeEntries struct {

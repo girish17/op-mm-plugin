@@ -45,6 +45,8 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 		SaveWP(p.MattermostPlugin, r)
 	case "/delWP":
 		DeleteWorkPackage(p.MattermostPlugin, w, r)
+	case "/subscribe":
+		NotificationSubscribe(p.MattermostPlugin, w, r)
 	case "/notifyChannel":
 		NotifyChannel(p.MattermostPlugin, w, r)
 	case "/bye":

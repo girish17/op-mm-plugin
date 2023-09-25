@@ -54,6 +54,8 @@ var customFieldForBillableHours string
 
 var timeEntriesSchema map[string]interface{}
 
+var subscribedChannelID string
+
 func OpAuth(p plugin.MattermostPlugin, r *http.Request, pluginURL string) {
 	body, _ := io.ReadAll(r.Body)
 	var jsonBody map[string]interface{}
@@ -714,12 +716,48 @@ func showTimeLogSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID 
 	_, _ = p.API.UpdatePost(post)
 }
 
+func NotificationSubscribe(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
+	body, _ := io.ReadAll(r.Body)
+	var jsonBody map[string]interface{}
+	_ = json.Unmarshal(body, &jsonBody)
+	subscribedChannelID = jsonBody["channel_id"].(string)
+	user, _ := p.API.GetUserByUsername(opBot)
+	post := getUpdatePostMsg(user.Id, subscribedChannelID, messages.SubscribeMsg)
+	_, _ = p.API.UpdatePost(post)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(200)
+	_, _ = w.Write(body)
+	_ = respHTTP.Write(w)
+}
+
 func NotifyChannel(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
+	p.API.LogDebug("Request body from OpenProject Webhooks: ", string(body))
 	defer r.Body.Close()
 	var opJSONRes Notification
+	user, _ := p.API.GetUserByUsername(opBot)
 	_ = json.Unmarshal(body, &opJSONRes)
-	p.API.LogDebug("Request body from OpenProject Webhooks: ", opJSONRes)
+	if subscribedChannelID == "" {
+		p.API.LogDebug("Not subscribed to OpenProject notification webhook")
+	} else {
+		notificationType := strings.Split(opJSONRes.Action, ":")[0]
+		var post *model.Post
+		notificationMsg := "**OpenProject notification** "
+		switch notificationType {
+		case "time_entry":
+			notificationMsg += opJSONRes.Action + " by " + opJSONRes.TimeEntry.Links.User.Title + " for " + opJSONRes.TimeEntry.Links.WorkPackage.Title + " in " + opJSONRes.TimeEntry.Links.Project.Title
+		case "project":
+			notificationMsg += opJSONRes.Action + " : " + opJSONRes.Project.Links.Self.Title
+		case "work_package":
+			notificationMsg += opJSONRes.Action + " : " + opJSONRes.WorkPackage.Links.Self.Title
+		case "attachment":
+			notificationMsg += opJSONRes.Action + " : " + opJSONRes.Attachment.Links.Self.Title
+		default:
+			notificationMsg += opJSONRes.Action
+		}
+		post = getUpdatePostMsg(user.Id, subscribedChannelID, notificationMsg)
+		_, _ = p.API.UpdatePost(post)
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)
 	_, _ = w.Write(body)
