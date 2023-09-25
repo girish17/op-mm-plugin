@@ -257,7 +257,6 @@ func SaveWP(p plugin.MattermostPlugin, r *http.Request) {
 		p.API.LogDebug("WP body JSON: ", string(wpJSON))
 		notify := strconv.FormatBool(submission["notify"].(bool))
 		resp, err := PostWP(wpJSON, OpURLStr, APIKeyStr, notify)
-		saveWPBody, _ := io.ReadAll(resp.Body)
 		if err == nil {
 			switch resp.StatusCode {
 			case 201:
@@ -395,14 +394,15 @@ func GetTimeLog(p plugin.MattermostPlugin, r *http.Request) {
 func getOptArrayForTimeEntries(elements []TimeElement) string {
 	var tableTxt string
 	if len(elements) != 0 {
-		tableTxt = "#### Time entries logged by you\n"
-		tableTxt += "| Spent On | Project | Work Package | Activity | Logged Time | Billed Time | Comment |\n"
-		tableTxt += "|:---------|:--------|:-------------|:---------|:------------|:------------|:--------|\n"
+		tableTxt = "#### Time entries logged\n"
+		tableTxt += "| User | Spent On | Project | Work Package | Activity | Logged Time | Billed Time | Comment |\n"
+		tableTxt += "|:---------|:---------|:--------|:-------------|:---------|:------------|:------------|:--------|\n"
 		for _, element := range elements {
+			tableTxt += "| " + element.Links.User.Title + " | "
 			d, _ := duration.ParseISO8601(element.Hours)
 			loggedTime := convDurationToHoursMin(d)
 			billedHours := convHoursToHoursMin(element.CustomField)
-			tableTxt += "| " + element.SpentOn + " | "
+			tableTxt += element.SpentOn + " | "
 			tableTxt += element.Links.Project.Title + " | "
 			tableTxt += element.Links.WorkPackage.Title + " | "
 			tableTxt += element.Links.Activity.Title + " | "
