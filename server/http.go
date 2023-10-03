@@ -26,9 +26,9 @@ import (
 func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Request) {
 	switch path := r.URL.Path; path {
 	case "/opAuth":
-		OpAuth(p.MattermostPlugin, r, pluginURL)
+		OpAuth(p.MattermostPlugin, w, r, pluginURL)
 	case "/createTimeLog":
-		ShowSelProject(p.MattermostPlugin, r, pluginURL, "showSelWP")
+		ShowSelProject(p.MattermostPlugin, w, r, pluginURL, "showSelWP")
 	case "/projSel":
 		WPHandler(p.MattermostPlugin, w, r)
 	case "/wpSel":
@@ -36,13 +36,13 @@ func (p *Plugin) ServeHTTP(_ *plugin.Context, w http.ResponseWriter, r *http.Req
 	case "/logTime":
 		HandleSubmission(p.MattermostPlugin, w, r)
 	case "/getTimeLog":
-		GetTimeLog(p.MattermostPlugin, r)
+		GetTimeLog(p.MattermostPlugin, w, r)
 	case "/delTimeLog":
 		DeleteTimeLog(p.MattermostPlugin, w, r)
 	case "/createWP":
-		ShowSelProject(p.MattermostPlugin, r, pluginURL, "createWP")
+		ShowSelProject(p.MattermostPlugin, w, r, pluginURL, "createWP")
 	case "/saveWP":
-		SaveWP(p.MattermostPlugin, r)
+		SaveWP(p.MattermostPlugin, w, r)
 	case "/delWP":
 		DeleteWorkPackage(p.MattermostPlugin, w, r)
 	case "/subscribe":
