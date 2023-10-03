@@ -53,6 +53,15 @@ func (p *Plugin) OnActivate() error {
 	if err := p.MattermostPlugin.API.RegisterCommand(createOpCommand(p.GetSiteURL())); err != nil {
 		return errors.Wrapf(err, "failed to register %s command", opCommand)
 	}
+
+	newBot := model.Bot{
+		Username:    opBot,
+		DisplayName: opBot,
+	}
+
+	if _, err := p.MattermostPlugin.API.CreateBot(&newBot); err != nil {
+		return errors.Wrapf(err, "failed to register #{opBot} bot")
+	}
 	p.MattermostPlugin.API.LogInfo("Deleting all KV pairs")
 	_ = p.MattermostPlugin.API.KVDeleteAll()
 	return nil
