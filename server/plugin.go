@@ -30,6 +30,11 @@ import (
 const opCommand = "op"
 const opBot = "op-mattermost"
 
+var bot = model.Bot{
+	Username:    opBot,
+	DisplayName: opBot,
+	Description: "OpenProject bot for Mattermost",
+}
 var pluginURL string
 
 // Plugin implements the interface expected by the Mattermost server to communicate between the server and plugin processes.
@@ -54,13 +59,10 @@ func (p *Plugin) OnActivate() error {
 		return errors.Wrapf(err, "failed to register %s command", opCommand)
 	}
 
-	newBot := model.Bot{
-		Username:    opBot,
-		DisplayName: opBot,
-	}
-
-	if _, err := p.MattermostPlugin.API.CreateBot(&newBot); err != nil {
-		return errors.Wrapf(err, "failed to register #{opBot} bot")
+	if user, _ := p.MattermostPlugin.API.GetUserByUsername(opBot); user == nil {
+		if _, err := p.MattermostPlugin.API.CreateBot(&bot); err != nil {
+			return errors.Wrapf(err, "failed to register %s bot", opBot)
+		}
 	}
 	p.MattermostPlugin.API.LogInfo("Deleting all KV pairs")
 	_ = p.MattermostPlugin.API.KVDeleteAll()
@@ -179,7 +181,7 @@ func _(opBot string) *model.Bot {
 //		p.MattermostPlugin.API.LogError("failed to fetch bot user", err)
 //	}
 //
-//	if appErr := p.MattermostPlugin.API.SetProfileImage(user.UserId, profileImage); appErr != nil {
+//	if appErr := p.MattermostPlugin.API.SetProfileImage(user.Id, profileImage); appErr != nil {
 //		p.MattermostPlugin.API.LogError("failed to set profile image", appErr)
 //	}
 // }
