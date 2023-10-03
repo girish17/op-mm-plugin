@@ -31,7 +31,7 @@ func GetUserDetails(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -42,7 +42,7 @@ func GetProjects(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -55,7 +55,7 @@ func GetWPsForProject(projectID string, opURLStr string, apiKeyStr string) (*htt
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -68,7 +68,7 @@ func GetWorkPackages(opURLStr string, apiKeyStr string) (*http.Response, error) 
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -82,7 +82,7 @@ func PostWP(wpJSON []byte, opURLStr string, apiKeyStr string, notify string) (*h
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -94,7 +94,7 @@ func DelWP(opURLStr string, apiKeyStr string, wpID string) (*http.Response, erro
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -106,7 +106,7 @@ func PostTimeEntriesForm(timeEntriesBodyJSON []byte, opURLStr string, apiKeyStr 
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -119,7 +119,7 @@ func GetTimeEntries(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -131,7 +131,7 @@ func PostTimeEntry(timeEntryJSON []byte, opURLStr string, apiKeyStr string) (*ht
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -142,7 +142,7 @@ func GetTimeEntriesSchema(opURLStr string, apiKeyStr string) (*http.Response, er
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -154,7 +154,7 @@ func DelTimeLog(opURLStr string, apiKeyStr string, timeLogID string) (*http.Resp
 	req.Header.Set("Content-Type", "application/json; charset=UTF-8")
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -165,7 +165,7 @@ func GetTypes(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
@@ -176,7 +176,7 @@ func GetAvailableAssignees(opURLStr string, apiKeyStr string, projectID string) 
 	req, _ := http.NewRequest("GET", fullURL, nil)
 	req.SetBasicAuth("apikey", apiKeyStr)
 	resp, err := client.Do(req)
-	if err != nil {
+	if err != nil && resp.Body != nil {
 		defer resp.Body.Close()
 	}
 	return resp, err
