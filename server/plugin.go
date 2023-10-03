@@ -103,23 +103,33 @@ func (p *Plugin) ExecuteCommand(_ *plugin.Context, args *model.CommandArgs) (*mo
 
 	var cmdResp *model.CommandResponse
 
-	resp, _ := GetUserDetails(OpURLStr, APIKeyStr)
-	opResBody, _ := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
+	resp, usrErr := GetUserDetails(OpURLStr, APIKeyStr)
+	if usrErr != nil {
+		p.API.LogError("Unable to fetch OpenProject user: ", usrErr)
+		cmdResp = &model.CommandResponse{
+			ResponseType: model.CommandResponseTypeInChannel,
+			Text:         "Invalid credentials. Unable to fetch OpenProject user :pensive:",
+			Username:     opBot,
+			IconURL:      logoURL,
+		}
+	} else {
+		opResBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 
-	var opJSONRes map[string]string
-	_ = json.Unmarshal(opResBody, &opJSONRes)
-	p.MattermostPlugin.API.LogInfo("Hello : ", opJSONRes["firstName"])
+		var opJSONRes map[string]string
+		_ = json.Unmarshal(opResBody, &opJSONRes)
+		p.MattermostPlugin.API.LogInfo("Hello : ", opJSONRes["firstName"])
 
-	var attachmentMap map[string]interface{}
-	_ = json.Unmarshal([]byte(GetAttachmentJSON(pluginURL)), &attachmentMap)
+		var attachmentMap map[string]interface{}
+		_ = json.Unmarshal([]byte(GetAttachmentJSON(pluginURL)), &attachmentMap)
 
-	cmdResp = &model.CommandResponse{
-		ResponseType: model.CommandResponseTypeInChannel,
-		Text:         "Hello " + opJSONRes["name"] + " :)",
-		Username:     opBot,
-		IconURL:      logoURL,
-		Props:        attachmentMap,
+		cmdResp = &model.CommandResponse{
+			ResponseType: model.CommandResponseTypeInChannel,
+			Text:         "Hello " + opJSONRes["name"] + " :)",
+			Username:     opBot,
+			IconURL:      logoURL,
+			Props:        attachmentMap,
+		}
 	}
 	return cmdResp, nil
 }

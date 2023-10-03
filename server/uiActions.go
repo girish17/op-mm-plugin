@@ -87,8 +87,8 @@ func OpAuth(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, p
 			_ = p.API.KVDelete(APIKeyStr)
 
 			channelID := jsonBody["channel_id"].(string)
-			resp, err := GetUserDetails(OpURLStr, APIKeyStr)
-			if err == nil {
+			resp, usrErr := GetUserDetails(OpURLStr, APIKeyStr)
+			if usrErr == nil {
 				opResBody, _ := io.ReadAll(resp.Body)
 				defer resp.Body.Close()
 				var opJSONRes map[string]string
@@ -106,7 +106,7 @@ func OpAuth(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, p
 					post = getCreatePostMsg(user.Id, channelID, opJSONRes["message"])
 				}
 			} else {
-				p.API.LogError("OpenProject login failed: ", err)
+				p.API.LogError("OpenProject login failed: ", usrErr)
 				post = getCreatePostMsg(user.Id, channelID, messages.OpAuthFailMsg)
 			}
 		}
