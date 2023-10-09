@@ -72,7 +72,7 @@ func OpAuth(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, p
 		var post *model.Post
 		if dialogCancelled {
 			p.API.LogInfo("Op Auth Dialog cancelled by user.")
-			post = getCreatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.DlgCancelMsg)
+			post = getCreatePostMsg(user.Id, jsonBody["channel_id"].(string), DlgCancelMsg)
 		} else {
 			submission := jsonBody["submission"].(map[string]interface{})
 			mmUserID := jsonBody["user_id"].(string)
@@ -107,7 +107,7 @@ func OpAuth(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request, p
 				}
 			} else {
 				p.API.LogError("OpenProject login failed: ", usrErr)
-				post = getCreatePostMsg(user.Id, channelID, messages.OpAuthFailMsg)
+				post = getCreatePostMsg(user.Id, channelID, OpAuthFailMsg)
 			}
 		}
 		menuPost, _ = p.API.CreatePost(post)
@@ -138,17 +138,17 @@ func ShowSelProject(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 			if opJSONRes.Type != "Error" {
 				p.API.LogInfo("Projects obtained from OP: ", opJSONRes.Embedded.Elements)
 				var options = getOptArrayForProjectElements(opJSONRes.Embedded.Elements)
-				post = getUpdatePostMsg(user.Id, channelID, messages.ProjectSelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, ProjectSelMsg)
 				var attachmentMap map[string]interface{}
 				_ = json.Unmarshal(getProjectOptAttachmentJSON(pluginURL, action, options), &attachmentMap)
 				post.SetProps(attachmentMap)
 			} else {
-				p.API.LogError(messages.ProjectFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.ProjectFailMsg)
+				p.API.LogError(ProjectFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, ProjectFailMsg)
 			}
 		} else {
-			p.API.LogError(messages.ProjectFailMsg, err)
-			post = getUpdatePostMsg(user.Id, channelID, messages.ProjectFailMsg)
+			p.API.LogError(ProjectFailMsg, err)
+			post = getUpdatePostMsg(user.Id, channelID, ProjectFailMsg)
 		}
 
 		_, _ = p.API.UpdatePost(post)
@@ -204,7 +204,7 @@ func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[st
 			if opJSONRes.Type != "Error" {
 				p.API.LogInfo("Work packages obtained from OP: ", opJSONRes.Embedded.Elements)
 				var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
-				post = getUpdatePostMsg(user.Id, channelID, messages.WPSelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, WPSelMsg)
 				var attachmentMap map[string]interface{}
 				_ = json.Unmarshal(getWPOptAttachmentJSON(pluginURL, "showTimeLogDlg", options), &attachmentMap)
 				post.SetProps(attachmentMap)
@@ -212,12 +212,12 @@ func showSelWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[st
 				w.WriteHeader(200)
 				_ = respHTTP.Write(w)
 			} else {
-				p.API.LogError(messages.WPFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.WPFailMsg)
+				p.API.LogError(WPFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, WPFailMsg)
 			}
 		} else {
 			p.API.LogError("Failed to fetch work packages from OpenProject: ", err)
-			post = getUpdatePostMsg(user.Id, channelID, messages.WPFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, WPFailMsg)
 		}
 		_, _ = p.API.UpdatePost(post)
 	}
@@ -255,13 +255,13 @@ func createWP(p plugin.MattermostPlugin, w http.ResponseWriter, jsonBody map[str
 					post = getUpdatePostMsg(user.Id, channelID, "Opening WP create dialog...")
 					_, _ = p.API.UpdatePost(post)
 				} else {
-					p.API.LogError(messages.AssigneeFailMsg)
-					post = getUpdatePostMsg(user.Id, channelID, messages.AssigneeFailMsg)
+					p.API.LogError(AssigneeFailMsg)
+					post = getUpdatePostMsg(user.Id, channelID, AssigneeFailMsg)
 					_, _ = p.API.UpdatePost(post)
 				}
 			} else {
-				p.API.LogError(messages.TypesFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TypesFailMsg)
+				p.API.LogError(TypesFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TypesFailMsg)
 				_, _ = p.API.UpdatePost(post)
 			}
 		}
@@ -285,7 +285,7 @@ func SaveWP(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 		var post *model.Post
 		if dialogCancelled {
 			p.API.LogInfo("Save WP dialog cancelled by user.")
-			post = getUpdatePostMsg(user.Id, channelID, messages.DlgCancelMsg)
+			post = getUpdatePostMsg(user.Id, channelID, DlgCancelMsg)
 		} else {
 			submission := jsonBody["submission"].(map[string]interface{})
 			p.API.LogInfo("WP submission data: ", submission)
@@ -296,24 +296,24 @@ func SaveWP(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				switch resp.StatusCode {
 				case 201:
-					p.API.LogInfo(messages.SaveWPSuccessMsg)
-					post = getUpdatePostMsg(user.Id, channelID, messages.SaveWPSuccessMsg)
+					p.API.LogInfo(SaveWPSuccessMsg)
+					post = getUpdatePostMsg(user.Id, channelID, SaveWPSuccessMsg)
 				case 403:
-					p.API.LogError(messages.WPCreateForbiddenMsg)
-					post = getUpdatePostMsg(user.Id, channelID, messages.WPCreateForbiddenMsg)
+					p.API.LogError(WPCreateForbiddenMsg)
+					post = getUpdatePostMsg(user.Id, channelID, WPCreateForbiddenMsg)
 				case 404:
-					p.API.LogError(messages.WPNotExist)
-					post = getUpdatePostMsg(user.Id, channelID, messages.WPNotExist)
+					p.API.LogError(WPNotExist)
+					post = getUpdatePostMsg(user.Id, channelID, WPNotExist)
 				case 422:
-					p.API.LogError(messages.WPTypeErrMsg)
-					post = getUpdatePostMsg(user.Id, channelID, messages.WPTypeErrMsg)
+					p.API.LogError(WPTypeErrMsg)
+					post = getUpdatePostMsg(user.Id, channelID, WPTypeErrMsg)
 				default:
-					p.API.LogError(messages.UnknownStatusCode)
-					post = getUpdatePostMsg(user.Id, channelID, messages.UnknownStatusCode)
+					p.API.LogError(UnknownStatusCode)
+					post = getUpdatePostMsg(user.Id, channelID, UnknownStatusCode)
 				}
 			} else {
-				p.API.LogError(messages.GenericErrMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.GenericErrMsg)
+				p.API.LogError(GenericErrMsg)
+				post = getUpdatePostMsg(user.Id, channelID, GenericErrMsg)
 			}
 			defer resp.Body.Close()
 		}
@@ -368,13 +368,13 @@ func LoadTimeLogDlg(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Re
 					post = getUpdatePostMsg(user.Id, channelID, "Opening time log dialog...")
 					_, _ = p.API.UpdatePost(post)
 				} else {
-					p.API.LogError(messages.ActivityFailMsg)
-					post = getUpdatePostMsg(user.Id, channelID, messages.ActivityFailMsg)
+					p.API.LogError(ActivityFailMsg)
+					post = getUpdatePostMsg(user.Id, channelID, ActivityFailMsg)
 					_, _ = p.API.UpdatePost(post)
 				}
 			} else {
-				p.API.LogError(messages.ActivityFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.ActivityFailMsg)
+				p.API.LogError(ActivityFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, ActivityFailMsg)
 				_, _ = p.API.UpdatePost(post)
 			}
 		}
@@ -430,13 +430,13 @@ func GetTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Reques
 				post = getUpdatePostMsg(user.Id, channelID, timeLogs)
 				_, _ = p.API.UpdatePost(post)
 			} else {
-				p.API.LogError(messages.TimeEntryFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+				p.API.LogError(TimeEntryFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeEntryFailMsg)
 				_, _ = p.API.UpdatePost(post)
 			}
 		} else {
-			p.API.LogError(messages.TimeEntryFailMsg)
-			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+			p.API.LogError(TimeEntryFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, TimeEntryFailMsg)
 			_, _ = p.API.UpdatePost(post)
 		}
 	}
@@ -486,7 +486,7 @@ func Logout(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(502)
 			_ = respHTTP.Write(w)
 		} else {
-			post := getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.ByeMsg)
+			post := getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), ByeMsg)
 			_, _ = p.API.UpdatePost(post)
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
@@ -516,7 +516,7 @@ func HandleSubmission(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.
 		var post *model.Post
 		if dialogCancelled {
 			p.API.LogInfo("Log time dialog cancelled by user.")
-			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), messages.DlgCancelMsg)
+			post = getUpdatePostMsg(user.Id, jsonBody["channel_id"].(string), DlgCancelMsg)
 		} else {
 			submission := jsonBody["submission"].(map[string]interface{})
 			if checkDate(submission["spent_on"].(string)) {
@@ -535,22 +535,22 @@ func HandleSubmission(p plugin.MattermostPlugin, w http.ResponseWriter, r *http.
 						p.API.LogDebug("Time entries response from OpenProject: ", opJSONRes)
 						if opJSONRes.Type != "Error" {
 							p.API.LogInfo("Time logged. Save response: ")
-							post = getUpdatePostMsg(user.Id, channelID, "Time entry ID - "+strconv.Itoa(opJSONRes.ID)+messages.LogTimeSuccessMsg)
+							post = getUpdatePostMsg(user.Id, channelID, "Time entry ID - "+strconv.Itoa(opJSONRes.ID)+LogTimeSuccessMsg)
 						} else {
-							p.API.LogError(messages.TimeEntrySaveFailMsg)
-							post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntrySaveFailMsg)
+							p.API.LogError(TimeEntrySaveFailMsg)
+							post = getUpdatePostMsg(user.Id, channelID, TimeEntrySaveFailMsg)
 						}
 					} else {
-						p.API.LogError(messages.TimeEntrySaveFailMsg)
-						post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntrySaveFailMsg)
+						p.API.LogError(TimeEntrySaveFailMsg)
+						post = getUpdatePostMsg(user.Id, channelID, TimeEntrySaveFailMsg)
 					}
 				} else {
 					p.API.LogInfo("Billable hours incorrect: ", billableHours)
-					post = getUpdatePostMsg(user.Id, channelID, messages.BillableHourMsg)
+					post = getUpdatePostMsg(user.Id, channelID, BillableHourMsg)
 				}
 			} else {
 				p.API.LogInfo("Date incorrect: ", jsonBody["spent_on"])
-				post = getUpdatePostMsg(user.Id, channelID, messages.DateIncorrectMsg)
+				post = getUpdatePostMsg(user.Id, channelID, DateIncorrectMsg)
 			}
 		}
 		_, _ = p.API.UpdatePost(post)
@@ -602,21 +602,21 @@ func delWP(p plugin.MattermostPlugin, w http.ResponseWriter, wpID string, channe
 			p.API.LogDebug("Work package delete response from OpenProject: ", resp.StatusCode)
 			switch resp.StatusCode {
 			case 204:
-				p.API.LogInfo(messages.WPLogDelMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.WPLogDelMsg)
+				p.API.LogInfo(WPLogDelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, WPLogDelMsg)
 			case 403:
-				p.API.LogError(messages.InsufficientPrivMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.InsufficientPrivMsg)
+				p.API.LogError(InsufficientMsg)
+				post = getUpdatePostMsg(user.Id, channelID, InsufficientMsg)
 			case 404:
-				p.API.LogError(messages.TimeEntryNotExist)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryNotExist)
+				p.API.LogError(TimeEntryNotExist)
+				post = getUpdatePostMsg(user.Id, channelID, TimeEntryNotExist)
 			default:
-				p.API.LogError(messages.TimeLogDelErrMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+				p.API.LogError(TimeLogDelErrMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeLogDelErrMsg)
 			}
 		} else {
-			p.API.LogError(messages.WPDelErrMsg)
-			post = getUpdatePostMsg(user.Id, channelID, messages.WPDelErrMsg)
+			p.API.LogError(WPDelErrMsg)
+			post = getUpdatePostMsg(user.Id, channelID, WPDelErrMsg)
 		}
 		defer resp.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -646,21 +646,21 @@ func showDelWPSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID st
 				var attachmentMap map[string]interface{}
 				var options = getOptArrayForWPElements(opJSONRes.Embedded.Elements)
 				p.API.LogInfo("Work packages KV : ", options)
-				post = getUpdatePostMsg(user.Id, channelID, messages.WPLogSelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, WPLogSelMsg)
 				_ = json.Unmarshal(getWPOptJSON(pluginURL, "cnfDelWP", options), &attachmentMap)
 				post.SetProps(attachmentMap)
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(200)
 				_ = respHTTP.Write(w)
 			} else {
-				p.API.LogError(messages.WPFetchFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.WPFetchFailMsg)
+				p.API.LogError(WPFetchFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, WPFetchFailMsg)
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		} else {
-			p.API.LogError(messages.WPFetchFailMsg)
-			post = getUpdatePostMsg(user.Id, channelID, messages.WPFetchFailMsg)
+			p.API.LogError(WPFetchFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, WPFetchFailMsg)
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -678,7 +678,7 @@ func cnfDelWP(p plugin.MattermostPlugin, w http.ResponseWriter, channelID string
 		w.WriteHeader(502)
 		_ = respHTTP.Write(w)
 	} else {
-		post = getUpdatePostMsg(user.Id, channelID, messages.CnfWPLogMsg+"\n"+wpEntry)
+		post = getUpdatePostMsg(user.Id, channelID, CnfWPLogMsg+"\n"+wpEntry)
 		_ = json.Unmarshal(getCnfDelBtnJSON(pluginURL+"/delWP", "delWP"), &attachmentMap)
 		post.SetProps(attachmentMap)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -727,7 +727,7 @@ func cnfDelTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, channelID s
 		_ = respHTTP.Write(w)
 	} else {
 		var attachmentMap map[string]interface{}
-		post := getUpdatePostMsg(user.Id, channelID, messages.CnfDelTimeLogMsg+"\n"+timeEntry)
+		post := getUpdatePostMsg(user.Id, channelID, CnfDelTimeLogMsg+"\n"+timeEntry)
 		_ = json.Unmarshal(getCnfDelBtnJSON(pluginURL+"/delTimeLog", "delSelTimeLog"), &attachmentMap)
 		post.SetProps(attachmentMap)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -753,22 +753,22 @@ func delTimeLog(p plugin.MattermostPlugin, w http.ResponseWriter, timeLogID stri
 			switch resp.StatusCode {
 			case 204:
 				var attachmentMap map[string]interface{}
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeLogDelMsg)
 				_ = json.Unmarshal(getTimeLogDelMsgJSON(pluginURL), &attachmentMap)
 				post.SetProps(attachmentMap)
 			case 403:
-				p.API.LogError(messages.InsufficientPrivMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.InsufficientPrivMsg)
+				p.API.LogError(InsufficientMsg)
+				post = getUpdatePostMsg(user.Id, channelID, InsufficientMsg)
 			case 404:
-				p.API.LogError(messages.TimeEntryNotExist)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryNotExist)
+				p.API.LogError(TimeEntryNotExist)
+				post = getUpdatePostMsg(user.Id, channelID, TimeEntryNotExist)
 			default:
-				p.API.LogError(messages.TimeLogDelErrMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+				p.API.LogError(TimeLogDelErrMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeLogDelErrMsg)
 			}
 		} else {
-			p.API.LogError(messages.TimeLogDelErrMsg)
-			post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogDelErrMsg)
+			p.API.LogError(TimeLogDelErrMsg)
+			post = getUpdatePostMsg(user.Id, channelID, TimeLogDelErrMsg)
 		}
 		defer resp.Body.Close()
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -798,21 +798,21 @@ func showTimeLogSel(p plugin.MattermostPlugin, w http.ResponseWriter, channelID 
 				var attachmentMap map[string]interface{}
 				var options = getOptArrayForTimeLogElements(opJSONRes.Embedded.Elements)
 				p.API.LogInfo("Time entries KV : ", options)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeLogSelMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeLogSelMsg)
 				_ = json.Unmarshal(getTimeLogOptJSON(pluginURL, "cnfDelTimeLog", options), &attachmentMap)
 				post.SetProps(attachmentMap)
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(200)
 				_ = respHTTP.Write(w)
 			} else {
-				p.API.LogError(messages.TimeEntryFailMsg)
-				post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+				p.API.LogError(TimeEntryFailMsg)
+				post = getUpdatePostMsg(user.Id, channelID, TimeEntryFailMsg)
 				w.Header().Set("Content-Type", "application/json; charset=utf-8")
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		} else {
-			p.API.LogError(messages.TimeEntryFailMsg)
-			post = getUpdatePostMsg(user.Id, channelID, messages.TimeEntryFailMsg)
+			p.API.LogError(TimeEntryFailMsg)
+			post = getUpdatePostMsg(user.Id, channelID, TimeEntryFailMsg)
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.WriteHeader(http.StatusInternalServerError)
 		}
@@ -832,7 +832,7 @@ func NotificationSubscribe(p plugin.MattermostPlugin, w http.ResponseWriter, r *
 		w.WriteHeader(502)
 		_ = respHTTP.Write(w)
 	} else {
-		post := getUpdatePostMsg(user.Id, subscribedChannelID, messages.SubscribeMsg)
+		post := getUpdatePostMsg(user.Id, subscribedChannelID, SubscribeMsg)
 		_, _ = p.API.UpdatePost(post)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(200)

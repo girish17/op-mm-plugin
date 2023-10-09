@@ -20,6 +20,8 @@ import (
 	"bytes"
 	"net/http"
 	"net/url"
+
+	"github.com/pkg/errors"
 )
 
 const apiVersionStr string = "/api/v3/"
@@ -33,6 +35,7 @@ func GetUserDetails(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch user details from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -44,6 +47,7 @@ func GetProjects(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch Projects from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -57,6 +61,7 @@ func GetWPsForProject(projectID string, opURLStr string, apiKeyStr string) (*htt
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch WPs from OpenProject for Project ID# %s", projectID)
 	}
 	return resp, err
 }
@@ -70,6 +75,7 @@ func GetWorkPackages(opURLStr string, apiKeyStr string) (*http.Response, error) 
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch WPs from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -84,6 +90,7 @@ func PostWP(wpJSON []byte, opURLStr string, apiKeyStr string, notify string) (*h
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot save WP in OpenProject")
 	}
 	return resp, err
 }
@@ -96,6 +103,7 @@ func DelWP(opURLStr string, apiKeyStr string, wpID string) (*http.Response, erro
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot delete WP# %s in OpenProject ", wpID)
 	}
 	return resp, err
 }
@@ -108,6 +116,7 @@ func PostTimeEntriesForm(timeEntriesBodyJSON []byte, opURLStr string, apiKeyStr 
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot save Time Entry form in OpenProject ")
 	}
 	return resp, err
 }
@@ -121,6 +130,7 @@ func GetTimeEntries(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch time entries from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -133,6 +143,7 @@ func PostTimeEntry(timeEntryJSON []byte, opURLStr string, apiKeyStr string) (*ht
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot save Time entry in OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -144,6 +155,7 @@ func GetTimeEntriesSchema(opURLStr string, apiKeyStr string) (*http.Response, er
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch Time entries schema from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -156,6 +168,7 @@ func DelTimeLog(opURLStr string, apiKeyStr string, timeLogID string) (*http.Resp
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot delete Time entry# %s in OpenProject", timeLogID)
 	}
 	return resp, err
 }
@@ -167,6 +180,7 @@ func GetTypes(opURLStr string, apiKeyStr string) (*http.Response, error) {
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch Types from OpenProject for %s and %s", opURLStr, apiKeyStr)
 	}
 	return resp, err
 }
@@ -178,6 +192,7 @@ func GetAvailableAssignees(opURLStr string, apiKeyStr string, projectID string) 
 	resp, err := client.Do(req)
 	if err != nil && resp != nil {
 		defer resp.Body.Close()
+		err = errors.Wrapf(err, "Cannot fetch Assignees from OpenProject for Project ID# %s", projectID)
 	}
 	return resp, err
 }
