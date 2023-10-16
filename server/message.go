@@ -24,7 +24,7 @@ const (
 	WPFailMsg            = "Failed to fetch work packages from OpenProject"
 	ActivityFailMsg      = "Failed to fetch activities from OpenProject"
 	TimeEntryFailMsg     = "Failed to fetch time entries from OpenProject"
-	ByeMsg               = "Donate at https://www.paypal.me/girishm17 :wave:"
+	ByeMsg               = "Crafted with :desktop_computer: and :books: by :nerd_face:. Donate at https://www.paypal.me/girishm17 :wave:"
 	BillableHourMsg      = "**It seems that billable hours was incorrect :thinking: Please note billable hours should be less than or equal to logged hours. **"
 	TimeEntrySaveFailMsg = "Failed to save time entry in OpenProject"
 	DateIncorrectMsg     = "**It seems that date was incorrect :thinking: Please enter a date within last one year and in YYYY-MM-DD format. **"
