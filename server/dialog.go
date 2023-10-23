@@ -49,7 +49,6 @@ func GetLogTimeDlg(pluginURL string, triggerID string, options []*model.PostActi
 				DisplayName: "Select Activity",
 				Name:        "activity",
 				Type:        "select",
-				Default:     options[0].Value,
 				Placeholder: "Type to search for activity",
 				Options:     options,
 			}, {
