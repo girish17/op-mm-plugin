@@ -364,8 +364,10 @@ func GetTimeEntriesBodyJSON(submission map[string]interface{}, loggedHours strin
 	var timeEntriesBody TimeEntryPostBody
 	timeEntriesBody.Links.Project.Href = apiVersionStr + "projects/" + projectID
 	timeEntriesBody.Links.WorkPackage.Href = apiVersionStr + "work_packages/" + timeLogID
-	activityID = strings.Split(submission["activity"].(string), "opt")[1]
-	timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
+	if submission["activity"] != nil {
+		activityID = strings.Split(submission["activity"].(string), "opt")[1]
+		timeEntriesBody.Links.Activity.Href = apiVersionStr + "time_entries/activities/" + activityID
+	}
 	timeEntriesBody.SpentOn = submission["spent_on"].(string)
 	timeEntriesBody.Comment.Raw = submission["comments"].(string)
 	spentHoursFloat, _ := strconv.ParseFloat(loggedHours, 64)
