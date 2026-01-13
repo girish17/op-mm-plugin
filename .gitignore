@@ -5,3 +5,7 @@ dist/
 
 # Jetbrains
 .idea/
+
+exportToHTML/
+
+.vscode

@@ -22,7 +22,7 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "7.16.7",
-    "@babel/runtime": "7.16.7",
+    "@babel/runtime": "7.28.3",
     "@emotion/babel-preset-css-prop": "11.2.0",
     "@emotion/core": "10.3.1",
     "@mattermost/types": "6.7.0-0",
@@ -70,7 +70,7 @@
     "sass": "1.52.3",
     "sass-loader": "13.0.0",
     "style-loader": "3.3.1",
-    "webpack": "5.76.0",
+    "webpack": "5.101.3",
     "webpack-cli": "5.0.1"
   },
   "dependencies": {
